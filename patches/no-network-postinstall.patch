@@ -1,0 +1,6 @@
+# Placeholder patch.
+#
+# Planned purpose:
+# disable or redirect postinstall-time network downloads such as Playwright,
+# RTK, and other helper fetches during the Nix build.
+
