@@ -4,6 +4,8 @@
 as a split `flake-parts` project with one simple public entrypoint and several
 optional runtime/helper lanes.
 
+Repository: <https://github.com/AzurCrystal/gsd-2-nix>
+
 The guiding idea is:
 
 - downstream users should usually only need `packages.${system}.gsd-2`
@@ -84,6 +86,14 @@ Inspect outputs:
 
 ```bash
 nix flake show
+```
+
+Use it as a flake input:
+
+```nix
+{
+  inputs.gsd-2-nix.url = "github:AzurCrystal/gsd-2-nix";
+}
 ```
 
 Run the default CLI:
