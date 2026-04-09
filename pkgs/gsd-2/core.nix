@@ -1,4 +1,4 @@
-{ pkgs, sourceInfo, builtTree }:
+{ pkgs, sourceInfo, builtTree, nativeEngine }:
 let
   runtimePath =
     pkgs.lib.makeBinPath (
@@ -45,6 +45,9 @@ pkgs.stdenvNoCC.mkDerivation {
         fi
       done
 
+      mkdir -p "$packageRoot/native"
+      ln -s ${nativeEngine}/lib/node_modules/gsd-pi/native/addon "$packageRoot/native/addon"
+
       cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-2-core.md"
 # gsd-2-core
 
@@ -54,6 +57,7 @@ summary: Real phase-1 core gsd-2 CLI/runtime layer with working gsd and gsd-cli 
 details:
 - wraps the built root/workspace tree from gsd-2-built-tree
 - includes the published runtime layout expected by the upstream loader
+- exposes the source-built native addon at the relative path that @gsd/native resolves at runtime
 - intentionally excludes packaged web standalone assets so phase 1 stays scoped
 EOF
 

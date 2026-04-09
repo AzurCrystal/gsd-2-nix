@@ -1,4 +1,4 @@
-{ pkgs, sourceInfo, builtTree, webModules }:
+{ pkgs, sourceInfo, builtTree, webModules, nativeEngine }:
 pkgs.stdenvNoCC.mkDerivation {
   pname = "gsd-2-web";
   inherit (sourceInfo) version;
@@ -90,9 +90,10 @@ pkgs.stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p "$out/dist" "$out/packages" "$out/share/gsd-2-blueprint/components"
+    mkdir -p "$out/dist" "$out/packages" "$out/native" "$out/share/gsd-2-blueprint/components"
     cp -a dist/web "$out/dist/"
     cp -a packages/native "$out/packages/"
+    ln -s ${nativeEngine}/lib/node_modules/gsd-pi/native/addon "$out/native/addon"
 
     cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-2-web.md"
 # gsd-2-web
@@ -104,6 +105,7 @@ details:
 - consumes the shared built tree instead of pretending web is a fully isolated frontend
 - patches Next font fetching to a local offline layout during the build
 - stages the standalone host and rewrites the @gsd/native symlink to the final package-relative target
+- exposes the source-built native addon at the standalone host's expected relative path
 EOF
 
     runHook postInstall

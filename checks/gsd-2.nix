@@ -4,6 +4,7 @@
     { pkgs, config, ... }:
     let
       gsdCoreRoot = "${config.packages."gsd-2-core"}/lib/node_modules/gsd-pi";
+      gsdWebRoot = "${config.packages."gsd-2-web"}";
       playwrightBrowsersPath = "${config.packages."gsd-2-playwright-runtime"}/share/gsd-2-playwright-runtime/browsers";
       rtkBin = "${config.packages."gsd-2-rtk"}/bin/rtk";
       mcpServerBin = "${config.packages."gsd-mcp-server"}/bin/gsd-mcp-server";
@@ -28,6 +29,8 @@
         test -f ${config.packages."gsd-2-core"}/share/gsd-2-blueprint/components/gsd-2-core.md
         test -f ${config.packages."gsd-2-web"}/dist/web/standalone/server.js
         test -f ${config.packages."gsd-2"}/dist/web/standalone/server.js
+        test -n "$(find -L ${config.packages."gsd-2-core"}/lib/node_modules/gsd-pi/native/addon -maxdepth 1 -type f -name 'gsd_engine.*.node' -print -quit)"
+        test -n "$(find -L ${config.packages."gsd-2-web"}/native/addon -maxdepth 1 -type f -name 'gsd_engine.*.node' -print -quit)"
         test -n "$(find -L ${config.packages."gsd-2"}/lib/node_modules/gsd-pi/native/addon -maxdepth 1 -type f -name 'gsd_engine.*.node' -print -quit)"
         test -z "$(find -L ${config.packages."gsd-2"}/lib/node_modules -path '*/@gsd-build/engine-*' -print -quit)"
         test "$(${config.packages."gsd-2-rtk"}/bin/rtk rewrite 'git status')" = "rtk git status"
@@ -54,6 +57,36 @@
         export PLAYWRIGHT_BROWSERS_PATH="${playwrightBrowsersPath}"
         export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
         export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
+
+        cat > "$TMPDIR/native-smoke.cjs" <<EOF
+const assert = require("node:assert/strict");
+
+const roots = [
+  [
+    "core",
+    "${gsdCoreRoot}/packages/native/dist/text/index.js",
+  ],
+  [
+    "web",
+    "${gsdWebRoot}/packages/native/dist/text/index.js",
+  ],
+  [
+    "meta",
+    "${config.packages."gsd-2"}/packages/native/dist/text/index.js",
+  ],
+];
+
+for (const [label, modulePath] of roots) {
+  const text = require(modulePath);
+  const lines = text.wrapTextWithAnsi("\u001b[31mhello world\u001b[0m", 5, 4);
+
+  assert.ok(Array.isArray(lines), label + " should return wrapped lines");
+  assert.ok(lines.length >= 2, label + " should wrap across multiple lines");
+  assert.equal(text.visibleWidth("abc", 4), 3, label + " should measure visible width");
+}
+EOF
+
+        ${node} "$TMPDIR/native-smoke.cjs"
 
         cat > "$TMPDIR/browser-smoke.mjs" <<EOF
 import assert from "node:assert/strict";
