@@ -19,7 +19,7 @@
         ];
       } ''
         test -x ${config.packages."gsd-2"}/bin/gsd
-        test "$(${config.packages."gsd-2"}/bin/gsd --version)" = "2.66.1"
+        test "$(${config.packages."gsd-2"}/bin/gsd --version)" = "2.67.0"
         test -x ${config.packages."gsd-2-suite"}/bin/gsd-mcp-server
         test -x ${config.packages."gsd-2-suite"}/bin/gsd-daemon
         test -x ${config.packages."gsd-2-playwright-runtime"}/bin/gsd-playwright-runtime
