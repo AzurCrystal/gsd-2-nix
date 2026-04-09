@@ -1,13 +1,13 @@
 { fetchFromGitHub }:
 let
-  version = "2.65.0";
+  version = "2.66.1";
 in
 {
   inherit version;
   playwrightVersion = "1.58.2";
   rtkVersion = "0.33.1";
   rtkSrcHash = "sha256-QkAtxSpMyjbscQgSUWks0aIkWaAYXgY6c9qM3sdPN+0=";
-  rootNpmDepsHash = "sha256-ymhQQ87/eSNTG9VRkHmj6/ei8/XVtJ/Fiy33BEcKVco=";
+  rootNpmDepsHash = "sha256-HSxGd+DdqQChEXCV1NUt2W998RbJUKeY2RAecREqPFY=";
   webNpmDepsHash = "sha256-TITFRG9tlDTMyvG5ohhgpjVARJIeVraWCzwWSRZ3MWw=";
 
   commonEnv = {
@@ -21,7 +21,7 @@ in
     owner = "gsd-build";
     repo = "gsd-2";
     rev = "v${version}";
-    hash = "sha256-SaSyn8DEKSATkIg4ed0EfRr8B+Gk72R5rQkh1KoNgl8=";
+    hash = "sha256-iKjGyJfcPsZF/fw2gsMg80lJCTtWd8EvkQfNw6T5F/Q=";
   };
 
   patchSet = {
