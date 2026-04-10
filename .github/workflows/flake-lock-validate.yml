@@ -1,0 +1,39 @@
+name: flake-lock-validate
+
+on:
+  pull_request:
+    paths:
+      - "flake.lock"
+      - "flake.nix"
+      - ".github/workflows/flake-lock-validate.yml"
+      - ".github/workflows/flake-lock-update.yml"
+
+concurrency:
+  group: flake-lock-validate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v16
+
+      - name: Install Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v9
+
+      - name: Configure Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: ${{ vars.CACHIX_CACHE_NAME }}
+
+      - name: Run flake checks
+        run: nix flake check -L

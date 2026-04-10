@@ -1,0 +1,71 @@
+name: flake-lock-update
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: flake-lock-update
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v16
+
+      - name: Install Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v9
+
+      - name: Configure Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: ${{ vars.CACHIX_CACHE_NAME }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Refresh flake lock
+        run: nix flake update
+
+      - name: Check whether lock changed
+        id: lock
+        run: |
+          if git diff --quiet -- flake.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run flake checks after refresh
+        if: steps.lock.outputs.changed == 'true'
+        run: nix flake check -L
+
+      - name: Prepare pull request body
+        if: steps.lock.outputs.changed == 'true'
+        run: |
+          cat > "$RUNNER_TEMP/flake-lock-pr-body.md" <<'EOF'
+          Automated flake.lock refresh.
+
+          This update refreshes the pinned flake inputs for the gsd-2 packaging
+          and validation graph.
+          EOF
+
+      - name: Create pull request
+        if: steps.lock.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: bot/flake-lock-update
+          title: "chore(flake): refresh flake.lock"
+          commit-message: "chore(flake): refresh flake.lock"
+          body-path: ${{ runner.temp }}/flake-lock-pr-body.md
+          delete-branch: true

@@ -141,10 +141,33 @@ nix shell .#gsd-2 .#gsd-2-rtk \
 - runtime smoke checks for browser-tools and RTK integration
 - companion smoke checks for `gsd-mcp-server` and `gsd-daemon`
 
-If you want GitHub Actions to reuse and push build outputs through Cachix, set:
+## Cachix
 
-- `vars.CACHIX_CACHE_NAME`
-- `secrets.CACHIX_AUTH_TOKEN`
+GitHub Actions can push build outputs into the `azurcrystal` Cachix cache. For
+local use, configure the substituter directly or use the manual Nix settings
+snippet below:
+
+```bash
+nix profile install --accept-flake-config nixpkgs#cachix
+```
+
+If you prefer to configure Nix manually, add the Cachix substituter and public
+key for `azurcrystal` to `nix.settings`:
+
+```nix
+{
+  nix.settings.substituters = [
+    "https://azurcrystal.cachix.org"
+  ];
+  nix.settings.trusted-public-keys = [
+    "azurcrystal.cachix.org-1:Hapo2wSReDyg2S7Veo7P5JzqQERYV3qj3I1kGbXCNyA="
+  ];
+}
+```
+
+The flake inputs are maintained separately through a dedicated `flake.lock`
+refresh workflow, so package-source updates and input updates stay reviewable
+on their own.
 
 ## Module Usage
 
