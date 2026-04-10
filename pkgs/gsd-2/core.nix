@@ -1,4 +1,4 @@
-{ pkgs, sourceInfo, builtTree, nativeEngine }:
+{ pkgs, sourceInfo, builtTree, nativeEngine, web }:
 let
   runtimePath =
     pkgs.lib.makeBinPath (
@@ -36,6 +36,9 @@ pkgs.stdenvNoCC.mkDerivation {
       cp -a ${builtTree}/dist ${builtTree}/packages ${builtTree}/pkg ${builtTree}/node_modules ${builtTree}/studio "$packageRoot/"
       cp -a ${builtTree}/src/resources "$packageRoot/src/"
       cp ${builtTree}/scripts/postinstall.js ${builtTree}/scripts/link-workspace-packages.cjs ${builtTree}/scripts/ensure-workspace-builds.cjs "$packageRoot/scripts/"
+      chmod -R u+w "$packageRoot/dist" || true
+      rm -rf "$packageRoot/dist/web"
+      ln -s ${web}/dist/web "$packageRoot/dist/web"
 
       chmod -R u+w "$packageRoot/node_modules/@gsd-build" || true
       for engineDir in "$packageRoot"/node_modules/@gsd-build/engine-*; do
@@ -57,8 +60,8 @@ summary: Real phase-1 core gsd-2 CLI/runtime layer with working gsd and gsd-cli 
 details:
 - wraps the built root/workspace tree from gsd-2-built-tree
 - includes the published runtime layout expected by the upstream loader
+- links the packaged standalone web host into dist/web so gsd --web can use default bootstrap resolution
 - exposes the source-built native addon at the relative path that @gsd/native resolves at runtime
-- intentionally excludes packaged web standalone assets so phase 1 stays scoped
 EOF
 
       makeWrapper ${node} "$out/bin/gsd" \

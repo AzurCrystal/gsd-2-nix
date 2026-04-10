@@ -28,12 +28,12 @@ let
     inherit pkgs sourceInfo;
   };
 
-  core = import ./core.nix {
-    inherit builtTree nativeEngine pkgs sourceInfo;
-  };
-
   web = import ./web.nix {
     inherit builtTree nativeEngine pkgs sourceInfo webModules;
+  };
+
+  core = import ./core.nix {
+    inherit builtTree nativeEngine pkgs sourceInfo web;
   };
 
   playwrightRuntime = import ./playwright-runtime.nix {
