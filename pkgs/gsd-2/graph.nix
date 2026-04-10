@@ -1,9 +1,5 @@
-{ pkgs, rustToolchain }:
+{ pkgs, rustToolchain, sourceInfo ? import ./source.nix { inherit (pkgs) fetchFromGitHub; } }:
 let
-  sourceInfo = import ./source.nix {
-    inherit (pkgs) fetchFromGitHub;
-  };
-
   componentLib = import ./component-lib.nix {
     inherit (pkgs) lib stdenvNoCC symlinkJoin;
   };

@@ -23,6 +23,7 @@
 
       imports = [
         ./pkgs/gsd-2/default.nix
+        ./pkgs/gsd-2/unstable.nix
         ./apps/default.nix
         ./checks/gsd-2.nix
       ];

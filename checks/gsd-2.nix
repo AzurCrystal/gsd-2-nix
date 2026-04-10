@@ -46,6 +46,18 @@
         mkdir -p "$out"
       '';
 
+      checks.gsd-2-unstable-blueprint = pkgs.runCommand "gsd-2-unstable-blueprint-check" {
+        nativeBuildInputs = [
+          pkgs.gitMinimal
+        ];
+      } ''
+        test -x ${config.packages."gsd-2-unstable"}/bin/gsd
+        test "$(${config.packages."gsd-2-unstable"}/bin/gsd --version)" = "${config.packages."gsd-2-unstable".version}"
+        test -f ${config.packages."gsd-2-unstable"}/share/gsd-2-blueprint/graph.json
+        test -f ${config.packages."gsd-2-unstable"}/dist/web/standalone/server.js
+        mkdir -p "$out"
+      '';
+
       checks.gsd-2-runtime-smoke = pkgs.runCommand "gsd-2-runtime-smoke" {
         nativeBuildInputs = [
           pkgs.gitMinimal

@@ -42,6 +42,11 @@ Public package outputs:
 - `packages.${system}.gsd-2-suite`
   Convenience meta package that bundles the default package with companion CLIs
   and optional runtime helper lanes.
+- `packages.${system}.gsd-2-unstable`
+  Moving meta package built from the latest upstream `main` commit.
+- `packages.${system}.gsd-2-unstable-suite`
+  Convenience unstable meta package that tracks the same moving upstream `main`
+  commit and bundles the companion CLIs.
 - `packages.${system}.gsd-2-core`
   Core CLI/runtime layer.
 - `packages.${system}.gsd-2-web`
@@ -106,6 +111,12 @@ Build the broader package set:
 
 ```bash
 nix build .#gsd-2-suite
+```
+
+Build the moving unstable channel:
+
+```bash
+nix build .#gsd-2-unstable
 ```
 
 Run browser-tools with packaged Playwright browsers:

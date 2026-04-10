@@ -3,4 +3,5 @@ result-*
 .direnv
 *.swp
 *.swo
-
+.bg-shell/
+scripts/__pycache__/
