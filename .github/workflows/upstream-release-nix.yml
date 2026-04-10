@@ -38,6 +38,11 @@ jobs:
       - name: Install Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@v9
 
+      - name: Configure Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: ${{ vars.CACHIX_CACHE_NAME }}
+
       - name: Run flake checks
         run: nix flake check -L
 
@@ -58,6 +63,12 @@ jobs:
 
       - name: Install Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@v9
+
+      - name: Configure Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: ${{ vars.CACHIX_CACHE_NAME }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
       - name: Refresh upstream release metadata
         id: release

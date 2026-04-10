@@ -141,6 +141,11 @@ nix shell .#gsd-2 .#gsd-2-rtk \
 - runtime smoke checks for browser-tools and RTK integration
 - companion smoke checks for `gsd-mcp-server` and `gsd-daemon`
 
+If you want GitHub Actions to reuse and push build outputs through Cachix, set:
+
+- `vars.CACHIX_CACHE_NAME`
+- `secrets.CACHIX_AUTH_TOKEN`
+
 ## Module Usage
 
 Both module entrypoints use the `programs.gsd` prefix.
