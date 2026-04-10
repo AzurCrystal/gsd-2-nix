@@ -1,0 +1,91 @@
+name: upstream-release-nix
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/upstream-release-nix.yml"
+      - ".github/workflows/upstream-release-poll.yml"
+      - "checks/gsd-2.nix"
+      - "pkgs/gsd-2/source.json"
+      - "pkgs/gsd-2/source.nix"
+      - "scripts/poll-upstream-release.py"
+      - "scripts/update-upstream-release.py"
+  repository_dispatch:
+    types:
+      - upstream-release-update
+  workflow_dispatch:
+
+concurrency:
+  group: upstream-release-nix-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v16
+
+      - name: Install Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v9
+
+      - name: Run flake checks
+        run: nix flake check -L
+
+  update:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v16
+
+      - name: Install Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v9
+
+      - name: Refresh upstream release metadata
+        id: release
+        run: python3 scripts/update-upstream-release.py --output-file "$GITHUB_OUTPUT"
+
+      - name: Run flake checks after refresh
+        if: steps.release.outputs.updated == 'true'
+        run: nix flake check -L
+
+      - name: Prepare pull request body
+        if: steps.release.outputs.updated == 'true'
+        run: |
+          cat > "$RUNNER_TEMP/upstream-release-pr-body.md" <<'EOF'
+          Automated refresh from [${{ steps.release.outputs.tag_name }}](${{ steps.release.outputs.release_url }}).
+
+          - Current version: `${{ steps.release.outputs.current_version }}`
+          - Updated version: `${{ steps.release.outputs.target_version }}`
+          - Prefetched hash: `${{ steps.release.outputs.hash }}`
+
+          The workflow updates `pkgs/gsd-2/source.json` and keeps the version assertion in `checks/gsd-2.nix` tied to the package version attribute.
+          EOF
+
+      - name: Create pull request
+        if: steps.release.outputs.updated == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: bot/upstream-gsd-2-${{ steps.release.outputs.target_version }}
+          title: "chore(gsd-2): update upstream release to v${{ steps.release.outputs.target_version }}"
+          commit-message: "chore(gsd-2): update upstream release to v${{ steps.release.outputs.target_version }}"
+          body-path: ${{ runner.temp }}/upstream-release-pr-body.md
+          delete-branch: true
