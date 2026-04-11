@@ -17,10 +17,4 @@ sourceInfo
     rev = "v${sourceInfo.version}";
     hash = sourceInfo.srcHash;
   };
-
-  patchSet = {
-    webLocalFonts = ../../patches/web-local-fonts.patch;
-    noNetworkPostinstall = ../../patches/no-network-postinstall.patch;
-    standaloneSymlinkFix = ../../patches/standalone-symlink-fix.patch;
-  };
 }

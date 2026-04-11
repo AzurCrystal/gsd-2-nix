@@ -1,6 +1,0 @@
-# Placeholder patch.
-#
-# Planned purpose:
-# rewrite symlink and traced-path assumptions inside the staged standalone web
-# host so they target the final meta-package layout instead of the build tree.
-

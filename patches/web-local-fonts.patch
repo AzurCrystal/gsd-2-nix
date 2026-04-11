@@ -1,6 +1,0 @@
-# Placeholder patch.
-#
-# Planned purpose:
-# replace `next/font/google` usage in the packaged web host with local fonts so
-# the Next.js build can stay fully offline.
-

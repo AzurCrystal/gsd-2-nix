@@ -74,7 +74,6 @@ let
     };
     source = {
       upstream = "gsd-build/gsd-2";
-      patchFiles = builtins.attrNames sourceInfo.patchSet;
     };
     internalComponents = [
       "gsd-2-root-modules"
