@@ -62,6 +62,9 @@ def parse_rtk_version(source_root: Path) -> str:
 
 def collect_upstream_source_metadata(source_root: Path) -> dict[str, str]:
     package_json = json.loads((source_root / "package.json").read_text(encoding="utf-8"))
+    package_version = package_json.get("version")
+    if not isinstance(package_version, str):
+        raise RuntimeError("package.json did not include version")
 
     playwright_spec = package_json.get("dependencies", {}).get("playwright")
     if not isinstance(playwright_spec, str):
@@ -71,6 +74,7 @@ def collect_upstream_source_metadata(source_root: Path) -> dict[str, str]:
     rtk_source = prefetch_github_source("rtk-ai", "rtk", f"v{rtk_version}")
 
     return {
+        "upstreamVersion": parse_semver(package_version, "package.json version"),
         "playwrightVersion": parse_semver(playwright_spec, "dependencies.playwright"),
         "rtkVersion": rtk_version,
         "rtkSrcHash": rtk_source["hash"],

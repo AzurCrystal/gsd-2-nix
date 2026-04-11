@@ -58,7 +58,7 @@
         ];
       } ''
         test -x ${config.packages."gsd-2-unstable"}/bin/gsd
-        test "$(${config.packages."gsd-2-unstable"}/bin/gsd --version)" = "${unstableSourceInfo.version}"
+        test "$(${config.packages."gsd-2-unstable"}/bin/gsd --version)" = "${unstableSourceInfo.upstreamVersion}"
         test -f ${config.packages."gsd-2-unstable"}/share/gsd-2-blueprint/graph.json
         test -f ${config.packages."gsd-2-unstable"}/dist/web/standalone/server.js
         mkdir -p "$out"
