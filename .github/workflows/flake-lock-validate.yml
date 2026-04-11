@@ -33,4 +33,4 @@ jobs:
           name: ${{ vars.CACHIX_CACHE_NAME }}
 
       - name: Run flake checks
-        run: nix flake check -L
+        run: ./scripts/run-flake-check-ci.sh

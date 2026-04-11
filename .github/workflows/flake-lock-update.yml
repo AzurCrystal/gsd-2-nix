@@ -45,7 +45,7 @@ jobs:
 
       - name: Run flake checks after refresh
         if: steps.lock.outputs.changed == 'true'
-        run: nix flake check -L
+        run: ./scripts/run-flake-check-ci.sh
 
       - name: Prepare pull request body
         if: steps.lock.outputs.changed == 'true'

@@ -43,7 +43,7 @@ jobs:
           name: ${{ vars.CACHIX_CACHE_NAME }}
 
       - name: Run flake checks
-        run: nix flake check -L
+        run: ./scripts/run-flake-check-ci.sh
 
   update:
     if: github.event_name != 'pull_request'
@@ -72,7 +72,7 @@ jobs:
 
       - name: Run flake checks after refresh
         if: steps.release.outputs.updated == 'true'
-        run: nix flake check -L
+        run: ./scripts/run-flake-check-ci.sh
 
       - name: Prepare pull request body
         if: steps.release.outputs.updated == 'true'
