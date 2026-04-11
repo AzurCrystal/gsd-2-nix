@@ -3,6 +3,12 @@
   perSystem =
     { pkgs, config, ... }:
     let
+      stableSourceInfo = import ../pkgs/gsd-2/source.nix {
+        inherit (pkgs) fetchFromGitHub;
+      };
+      unstableSourceInfo = import ../pkgs/gsd-2/source-unstable.nix {
+        inherit (pkgs) fetchFromGitHub;
+      };
       gsdCoreRoot = "${config.packages."gsd-2-core"}/lib/node_modules/gsd-pi";
       gsdWebRoot = "${config.packages."gsd-2-web"}";
       playwrightBrowsersPath = "${config.packages."gsd-2-playwright-runtime"}/share/gsd-2-playwright-runtime/browsers";
@@ -19,7 +25,7 @@
         ];
       } ''
         test -x ${config.packages."gsd-2"}/bin/gsd
-        test "$(${config.packages."gsd-2"}/bin/gsd --version)" = "${config.packages."gsd-2".version}"
+        test "$(${config.packages."gsd-2"}/bin/gsd --version)" = "${stableSourceInfo.version}"
         test -x ${config.packages."gsd-2-suite"}/bin/gsd-mcp-server
         test -x ${config.packages."gsd-2-suite"}/bin/gsd-daemon
         test -x ${config.packages."gsd-2-playwright-runtime"}/bin/gsd-playwright-runtime
@@ -52,7 +58,7 @@
         ];
       } ''
         test -x ${config.packages."gsd-2-unstable"}/bin/gsd
-        test "$(${config.packages."gsd-2-unstable"}/bin/gsd --version)" = "${config.packages."gsd-2-unstable".version}"
+        test "$(${config.packages."gsd-2-unstable"}/bin/gsd --version)" = "${unstableSourceInfo.version}"
         test -f ${config.packages."gsd-2-unstable"}/share/gsd-2-blueprint/graph.json
         test -f ${config.packages."gsd-2-unstable"}/dist/web/standalone/server.js
         mkdir -p "$out"

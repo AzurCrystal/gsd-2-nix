@@ -1,5 +1,10 @@
 {
-  "version": "unstable-5399650",
-  "rev": "539965001525aaf68fe31f88e3235bf12fbbd42e",
-  "srcHash": "sha256-XSBKP3zTxwTq2RkegyprrndqLOgLgyn1aa7F81kzuKY="
+  "version": "unstable-3591dcf",
+  "rev": "3591dcf4965a30791e55d155063bb6ce17f55d73",
+  "srcHash": "sha256-+4Lk0IMlScns8DNnKsY7yKcHTZXmgWNlTHfsIzadn6A=",
+  "playwrightVersion": "1.58.2",
+  "rtkVersion": "0.33.1",
+  "rtkSrcHash": "sha256-QkAtxSpMyjbscQgSUWks0aIkWaAYXgY6c9qM3sdPN+0=",
+  "rootNpmDepsHash": "sha256-gtp24T5/lachi0vxA1qHxxcEB9o5MlomDZ7jve1bosE=",
+  "webNpmDepsHash": "sha256-8UXVOLj6qlP5xSCnpaPaIqYrvZV8wihGwcudrQ+lv+k="
 }

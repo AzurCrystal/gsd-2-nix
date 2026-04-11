@@ -4,10 +4,11 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import subprocess
 import urllib.request
 from pathlib import Path
 from urllib.parse import urlencode
+
+from upstream_source_metadata import collect_upstream_source_metadata, prefetch_github_source
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,20 +46,6 @@ def fetch_latest_commit() -> dict[str, str]:
     }
 
 
-def prefetch_hash(rev: str) -> str:
-    result = subprocess.run(
-        ["nix", "flake", "prefetch", "--json", f"github:gsd-build/gsd-2/{rev}"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    payload = json.loads(result.stdout)
-    hash_value = payload.get("hash")
-    if not hash_value:
-        raise RuntimeError("nix flake prefetch did not return a hash")
-    return hash_value
-
-
 def emit_outputs(path: Path | None, values: dict[str, str]) -> None:
     if path is None:
         return
@@ -83,8 +70,15 @@ def main() -> int:
 
     commit = fetch_latest_commit()
     target_rev = commit["sha"]
+    source = prefetch_github_source("gsd-build", "gsd-2", target_rev)
+    source_root = Path(source["storePath"])
+    target_info = dict(current_info)
+    target_info["rev"] = target_rev
+    target_info["version"] = f"unstable-{commit['short_sha']}"
+    target_info["srcHash"] = source["hash"]
+    target_info.update(collect_upstream_source_metadata(source_root))
 
-    if current_rev == target_rev:
+    if current_info == target_info:
         emit_outputs(
             args.output_file,
             {
@@ -100,12 +94,8 @@ def main() -> int:
         print(json.dumps({"updated": False, "current_rev": current_rev, "target_rev": target_rev}))
         return 0
 
-    new_hash = prefetch_hash(target_rev)
-    current_info["rev"] = target_rev
-    current_info["version"] = f"unstable-{commit['short_sha']}"
-    current_info["srcHash"] = new_hash
     SOURCE_FILE.write_text(
-        json.dumps(current_info, indent=2, ensure_ascii=False) + "\n",
+        json.dumps(target_info, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
 
@@ -118,7 +108,7 @@ def main() -> int:
             "short_sha": commit["short_sha"],
             "commit_url": commit["html_url"],
             "commit_date": commit["commit_date"],
-            "hash": new_hash,
+            "hash": source["hash"],
         },
     )
     print(
@@ -129,7 +119,7 @@ def main() -> int:
                 "target_rev": target_rev,
                 "short_sha": commit["short_sha"],
                 "commit_url": commit["html_url"],
-                "hash": new_hash,
+                "hash": source["hash"],
             }
         )
     )
