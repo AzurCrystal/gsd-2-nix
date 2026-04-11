@@ -29,7 +29,6 @@ jobs:
         uses: cachix/cachix-action@v17
         with:
           name: ${{ vars.CACHIX_CACHE_NAME }}
-          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
       - name: Refresh flake lock
         run: nix flake update

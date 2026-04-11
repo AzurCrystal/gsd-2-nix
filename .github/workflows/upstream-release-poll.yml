@@ -2,7 +2,8 @@ name: upstream-release-poll
 
 on:
   schedule:
-    - cron: "17 9 * * *"
+    # Snapshot upstream once per day during the quieter UTC morning window.
+    - cron: "17 10 * * *"
   workflow_dispatch:
 
 permissions:

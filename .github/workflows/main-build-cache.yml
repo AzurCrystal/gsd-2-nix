@@ -1,23 +1,29 @@
-name: flake-lock-validate
+name: main-build-cache
 
 on:
-  pull_request:
+  push:
+    branches:
+      - main
     paths:
+      - ".github/workflows/*.yml"
+      - "apps/**"
+      - "checks/**"
       - "flake.lock"
       - "flake.nix"
-      - ".github/workflows/flake-lock-validate.yml"
-      - ".github/workflows/flake-lock-update.yml"
+      - "modules/**"
+      - "patches/**"
+      - "pkgs/**"
+      - "scripts/**"
 
 concurrency:
-  group: flake-lock-validate-${{ github.event.pull_request.number }}
+  group: main-build-cache-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  validate:
-    if: github.head_ref != 'bot/flake-lock-update'
+  build-and-push-cache:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -32,6 +38,15 @@ jobs:
         uses: cachix/cachix-action@v17
         with:
           name: ${{ vars.CACHIX_CACHE_NAME }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
       - name: Run flake checks
         run: ./scripts/run-flake-check-ci.sh
+
+      - name: Build primary package surfaces
+        run: |
+          nix build -L \
+            .#gsd-2 \
+            .#gsd-2-suite \
+            .#gsd-2-unstable \
+            .#gsd-2-unstable-suite
