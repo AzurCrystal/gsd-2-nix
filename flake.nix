@@ -8,18 +8,16 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    systems.url = "github:nix-systems/default";
   };
 
   outputs =
     inputs@{
       self,
       flake-parts,
-      systems,
       ...
     }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = import systems;
+      systems = [ "x86_64-linux" ];
 
       imports = [
         ./pkgs/gsd-2/default.nix
