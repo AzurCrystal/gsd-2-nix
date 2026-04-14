@@ -1,10 +1,10 @@
 {
-  "version": "2.72.0",
+  "version": "2.73.1",
   "playwrightVersion": "1.58.2",
   "rtkVersion": "0.33.1",
   "rtkSrcHash": "sha256-QkAtxSpMyjbscQgSUWks0aIkWaAYXgY6c9qM3sdPN+0=",
-  "rootNpmDepsHash": "sha256-ydCOqPksXSDcVLQyjt3ua6pl6/bSs4uR2YN0Aoscfyg=",
-  "webNpmDepsHash": "sha256-8UXVOLj6qlP5xSCnpaPaIqYrvZV8wihGwcudrQ+lv+k=",
-  "srcHash": "sha256-Sd4yjI+FnZBV1qSzQUB5IXdzHnH5a5Cokiudj5TTWEg=",
-  "upstreamVersion": "2.72.0"
+  "rootNpmDepsHash": "sha256-wKhRfvZOI4tg1dacKwWCcbW+oVs8qR27NOouAY4X+ts=",
+  "webNpmDepsHash": "sha256-wcBSi2Jn9jzcGO6WG8oX8d+K7bvLLw71T8ogA9mNb3E=",
+  "srcHash": "sha256-jde7xIDFUGBoXpBZLGnO6/bVo6HU78RzAyDD+BXtFX8=",
+  "upstreamVersion": "2.73.1"
 }
