@@ -6,9 +6,6 @@
       stableSourceInfo = import ../pkgs/gsd-2/source.nix {
         inherit (pkgs) fetchFromGitHub;
       };
-      unstableSourceInfo = import ../pkgs/gsd-2/source-unstable.nix {
-        inherit (pkgs) fetchFromGitHub;
-      };
       gsdCoreRoot = "${config.packages."gsd-2-core"}/lib/node_modules/gsd-pi";
       gsdWebRoot = "${config.packages."gsd-2-web"}";
       playwrightBrowsersPath = "${config.packages."gsd-2-playwright-runtime"}/share/gsd-2-playwright-runtime/browsers";
@@ -49,18 +46,6 @@
         printf '%s\n' "$playwrightEnv" | grep -q '^PLAYWRIGHT_BROWSERS_PATH='
         printf '%s\n' "$playwrightEnv" | grep -q '^PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1$'
         printf '%s\n' "$playwrightEnv" | grep -q '^PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true$'
-        mkdir -p "$out"
-      '';
-
-      checks.gsd-2-unstable-blueprint = pkgs.runCommand "gsd-2-unstable-blueprint-check" {
-        nativeBuildInputs = [
-          pkgs.gitMinimal
-        ];
-      } ''
-        test -x ${config.packages."gsd-2-unstable"}/bin/gsd
-        test "$(${config.packages."gsd-2-unstable"}/bin/gsd --version)" = "${unstableSourceInfo.upstreamVersion}"
-        test -f ${config.packages."gsd-2-unstable"}/share/gsd-2-blueprint/graph.json
-        test -f ${config.packages."gsd-2-unstable"}/dist/web/standalone/server.js
         mkdir -p "$out"
       '';
 

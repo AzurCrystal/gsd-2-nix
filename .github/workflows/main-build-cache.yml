@@ -57,67 +57,41 @@ jobs:
               - "scripts/**"
               - "!pkgs/gsd-2/source.json"
               - "!pkgs/gsd-2/source.nix"
-              - "!pkgs/gsd-2/source-unstable.json"
-              - "!pkgs/gsd-2/source-unstable.nix"
-              - "!pkgs/gsd-2/unstable.nix"
               - "!scripts/poll-upstream-release.py"
               - "!scripts/update-upstream-release.py"
-              - "!scripts/poll-upstream-unstable.py"
-              - "!scripts/update-upstream-unstable.py"
             stable:
               - "pkgs/gsd-2/source.json"
               - "pkgs/gsd-2/source.nix"
               - "scripts/poll-upstream-release.py"
               - "scripts/update-upstream-release.py"
-            unstable:
-              - "pkgs/gsd-2/source-unstable.json"
-              - "pkgs/gsd-2/source-unstable.nix"
-              - "pkgs/gsd-2/unstable.nix"
-              - "scripts/poll-upstream-unstable.py"
-              - "scripts/update-upstream-unstable.py"
 
       - name: Report selected build scope
         run: |
           echo "shared=${{ steps.changes.outputs.shared }}"
           echo "stable=${{ steps.changes.outputs.stable }}"
-          echo "unstable=${{ steps.changes.outputs.unstable }}"
 
       - name: Run full flake checks
-        if: steps.changes.outputs.shared == 'true' || (steps.changes.outputs.stable == 'true' && steps.changes.outputs.unstable == 'true')
+        if: steps.changes.outputs.shared == 'true'
         run: ./scripts/run-flake-check-ci.sh
 
       - name: Run stable checks
-        if: steps.changes.outputs.shared != 'true' && steps.changes.outputs.stable == 'true' && steps.changes.outputs.unstable != 'true'
+        if: steps.changes.outputs.shared != 'true' && steps.changes.outputs.stable == 'true'
         run: |
           nix build -L \
             .#checks.x86_64-linux.gsd-2-blueprint \
             .#checks.x86_64-linux.gsd-2-runtime-smoke \
             .#checks.x86_64-linux.gsd-2-companion-smoke
 
-      - name: Run unstable checks
-        if: steps.changes.outputs.shared != 'true' && steps.changes.outputs.unstable == 'true' && steps.changes.outputs.stable != 'true'
-        run: |
-          nix build -L .#checks.x86_64-linux.gsd-2-unstable-blueprint
-
       - name: Build full package surfaces
-        if: steps.changes.outputs.shared == 'true' || (steps.changes.outputs.stable == 'true' && steps.changes.outputs.unstable == 'true')
-        run: |
-          nix build -L \
-            .#gsd-2 \
-            .#gsd-2-suite \
-            .#gsd-2-unstable \
-            .#gsd-2-unstable-suite
-
-      - name: Build stable package surfaces
-        if: steps.changes.outputs.shared != 'true' && steps.changes.outputs.stable == 'true' && steps.changes.outputs.unstable != 'true'
+        if: steps.changes.outputs.shared == 'true'
         run: |
           nix build -L \
             .#gsd-2 \
             .#gsd-2-suite
 
-      - name: Build unstable package surfaces
-        if: steps.changes.outputs.shared != 'true' && steps.changes.outputs.unstable == 'true' && steps.changes.outputs.stable != 'true'
+      - name: Build stable package surfaces
+        if: steps.changes.outputs.shared != 'true' && steps.changes.outputs.stable == 'true'
         run: |
           nix build -L \
-            .#gsd-2-unstable \
-            .#gsd-2-unstable-suite
+            .#gsd-2 \
+            .#gsd-2-suite
