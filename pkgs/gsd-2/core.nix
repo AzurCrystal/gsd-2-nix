@@ -33,7 +33,7 @@ pkgs.stdenvNoCC.mkDerivation {
       mkdir -p "$packageRoot" "$packageRoot/scripts" "$packageRoot/src" "$out/bin" "$out/share/gsd-2-blueprint/components"
 
       cp ${builtTree}/package.json ${builtTree}/README.md ${builtTree}/LICENSE "$packageRoot/"
-      cp -a ${builtTree}/dist ${builtTree}/packages ${builtTree}/pkg ${builtTree}/node_modules ${builtTree}/studio "$packageRoot/"
+      cp -a ${builtTree}/dist ${builtTree}/packages ${builtTree}/pkg ${builtTree}/node_modules ${builtTree}/studio ${builtTree}/extensions "$packageRoot/"
       cp -a ${builtTree}/src/resources "$packageRoot/src/"
       cp ${builtTree}/scripts/postinstall.js ${builtTree}/scripts/link-workspace-packages.cjs ${builtTree}/scripts/ensure-workspace-builds.cjs "$packageRoot/scripts/"
       chmod -R u+w "$packageRoot/dist" || true

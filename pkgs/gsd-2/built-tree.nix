@@ -13,11 +13,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
     cp -a ${rootModules}/node_modules ./node_modules
 
-    npm run build:pi
-    npm exec -- tsc
-    npm run copy-resources
-    npm run copy-themes
-    npm run copy-export-html
+    npm run build:core
 
     runHook postBuild
   '';

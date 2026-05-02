@@ -23,7 +23,7 @@ pkgs.stdenvNoCC.mkDerivation {
     runHook preInstall
 
     mkdir -p "$out/share/gsd-2-blueprint/components"
-    cp -a package.json package-lock.json node_modules packages studio "$out/"
+    cp -a package.json package-lock.json node_modules packages studio extensions "$out/"
 
     cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-2-companions-tree.md"
 # gsd-2-companions-tree

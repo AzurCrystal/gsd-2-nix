@@ -24,7 +24,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
       root="$out/share/gsd-2-daemon-root"
       mkdir -p "$root" "$out/bin" "$out/share/gsd-2-blueprint/components"
-      cp -a ${companionsTree}/node_modules ${companionsTree}/packages ${companionsTree}/studio "$root/"
+      cp -a ${companionsTree}/node_modules ${companionsTree}/packages ${companionsTree}/studio ${companionsTree}/extensions "$root/"
 
       cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-daemon.md"
 # gsd-daemon

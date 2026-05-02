@@ -15,7 +15,7 @@ pkgs.buildNpmPackage {
 
     mkdir -p "$out/share/gsd-2-blueprint/components"
     cp package.json package-lock.json "$out/"
-    cp -a node_modules packages studio "$out/"
+    cp -a node_modules packages studio extensions "$out/"
 
     cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-2-root-modules.md"
 # gsd-2-root-modules
