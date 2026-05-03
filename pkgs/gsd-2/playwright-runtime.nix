@@ -9,8 +9,9 @@ let
   };
 in
 assert lib.assertMsg (
-  playwrightDriver.version == sourceInfo.playwrightVersion
-) "gsd-2-playwright-runtime expects nixpkgs playwright-driver ${sourceInfo.playwrightVersion}, got ${playwrightDriver.version}";
+  # Upstream declares a semver range for Playwright; sourceInfo stores the lower bound.
+  lib.versionAtLeast playwrightDriver.version sourceInfo.playwrightVersion
+) "gsd-2-playwright-runtime expects nixpkgs playwright-driver >= ${sourceInfo.playwrightVersion}, got ${playwrightDriver.version}";
 pkgs.stdenvNoCC.mkDerivation {
   pname = "gsd-2-playwright-runtime";
   version = sourceInfo.version;
