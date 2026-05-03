@@ -33,7 +33,7 @@ let
   };
 
   playwrightRuntime = import ./playwright-runtime.nix {
-    inherit pkgs sourceInfo;
+    inherit pkgs rootModules sourceInfo;
   };
 
   rtk = import ./rtk.nix {

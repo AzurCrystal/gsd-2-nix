@@ -41,7 +41,8 @@
         printf '%s\n' "$rtkEnv" | grep -q '^GSD_RTK_PATH='
         printf '%s\n' "$rtkEnv" | grep -q '^GSD_SKIP_RTK_INSTALL=1$'
         printf '%s\n' "$rtkEnv" | grep -q '^RTK_TELEMETRY_DISABLED=1$'
-        test -L ${config.packages."gsd-2-playwright-runtime"}/share/gsd-2-playwright-runtime/browsers
+        test -d ${config.packages."gsd-2-playwright-runtime"}/share/gsd-2-playwright-runtime/browsers
+        test -n "$(find -L ${config.packages."gsd-2-playwright-runtime"}/share/gsd-2-playwright-runtime/browsers -maxdepth 3 -type f -path '*/chrome-headless-shell-linux64/chrome-headless-shell' -print -quit)"
         playwrightEnv="$(${config.packages."gsd-2-playwright-runtime"}/bin/gsd-playwright-runtime --print-env)"
         printf '%s\n' "$playwrightEnv" | grep -q '^PLAYWRIGHT_BROWSERS_PATH='
         printf '%s\n' "$playwrightEnv" | grep -q '^PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1$'
