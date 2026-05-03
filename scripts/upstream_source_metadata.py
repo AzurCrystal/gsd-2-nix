@@ -61,7 +61,9 @@ def parse_rtk_version(source_root: Path) -> str:
 
 
 def collect_upstream_source_metadata(source_root: Path) -> dict[str, str]:
-    package_json = json.loads((source_root / "package.json").read_text(encoding="utf-8"))
+    package_json = json.loads(
+        (source_root / "package.json").read_text(encoding="utf-8")
+    )
     package_version = package_json.get("version")
     if not isinstance(package_version, str):
         raise RuntimeError("package.json did not include version")

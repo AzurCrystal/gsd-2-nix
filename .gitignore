@@ -5,3 +5,4 @@ result-*
 *.swo
 .bg-shell/
 scripts/__pycache__/
+/.pre-commit-config.yaml

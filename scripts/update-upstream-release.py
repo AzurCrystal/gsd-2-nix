@@ -7,7 +7,10 @@ import os
 import urllib.request
 from pathlib import Path
 
-from upstream_source_metadata import collect_upstream_source_metadata, prefetch_github_source
+from upstream_source_metadata import (
+    collect_upstream_source_metadata,
+    prefetch_github_source,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,7 +52,9 @@ def emit_outputs(path: Path | None, values: dict[str, str]) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Refresh gsd-2 upstream release metadata.")
+    parser = argparse.ArgumentParser(
+        description="Refresh gsd-2 upstream release metadata."
+    )
     parser.add_argument(
         "--output-file",
         type=Path,
@@ -85,7 +90,11 @@ def main() -> int:
                 "hash": "",
             },
         )
-        print(json.dumps({"updated": False, "version": current_version, "tag_name": tag_name}))
+        print(
+            json.dumps(
+                {"updated": False, "version": current_version, "tag_name": tag_name}
+            )
+        )
         return 0
 
     SOURCE_FILE.write_text(

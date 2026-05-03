@@ -1,4 +1,8 @@
-{ pkgs, sourceInfo, rootModules }:
+{
+  pkgs,
+  sourceInfo,
+  rootModules,
+}:
 pkgs.stdenvNoCC.mkDerivation {
   pname = "gsd-2-built-tree";
   inherit (sourceInfo) src version;
@@ -19,24 +23,24 @@ pkgs.stdenvNoCC.mkDerivation {
   '';
 
   installPhase = ''
-    runHook preInstall
+        runHook preInstall
 
-    mkdir -p "$out/share/gsd-2-blueprint/components"
-    cp -a . "$out/"
+        mkdir -p "$out/share/gsd-2-blueprint/components"
+        cp -a . "$out/"
 
-    cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-2-built-tree.md"
-# gsd-2-built-tree
+        cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-2-built-tree.md"
+    # gsd-2-built-tree
 
-role: shared compiled source tree
-summary: Shared root/workspace build output that produces dist, pkg, and bundled resources before web packaging runs.
+    role: shared compiled source tree
+    summary: Shared root/workspace build output that produces dist, pkg, and bundled resources before web packaging runs.
 
-details:
-- builds the root CLI sources and required workspace dist outputs
-- is the real phase-1 compiled tree consumed by gsd-2-core
-- leaves web standalone packaging for a later graph stage
-EOF
+    details:
+    - builds the root CLI sources and required workspace dist outputs
+    - is the real phase-1 compiled tree consumed by gsd-2-core
+    - leaves web standalone packaging for a later graph stage
+    EOF
 
-    runHook postInstall
+        runHook postInstall
   '';
 
   meta = {

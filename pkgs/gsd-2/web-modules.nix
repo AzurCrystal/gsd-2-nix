@@ -22,25 +22,25 @@ pkgs.buildNpmPackage {
   env = sourceInfo.commonEnv;
 
   installPhase = ''
-    runHook preInstall
+        runHook preInstall
 
-    mkdir -p "$out/share/gsd-2-blueprint/components"
-    cp web/package.json web/package-lock.json "$out/"
-    cp -a web/node_modules "$out/"
+        mkdir -p "$out/share/gsd-2-blueprint/components"
+        cp web/package.json web/package-lock.json "$out/"
+        cp -a web/node_modules "$out/"
 
-    cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-2-web-modules.md"
-# gsd-2-web-modules
+        cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-2-web-modules.md"
+    # gsd-2-web-modules
 
-role: web dependency layer
-summary: Offline closure for the dedicated web/package-lock dependency graph, including node-pty and image-processing inputs.
+    role: web dependency layer
+    summary: Offline closure for the dedicated web/package-lock dependency graph, including node-pty and image-processing inputs.
 
-details:
-- consumes web/package-lock.json independently from the root package-lock
-- rebuilds node-pty in the Nix build so the packaged standalone host has native terminal support
-- is implemented for real in phase 2 so the web host can build without reusing the root dependency lock
-EOF
+    details:
+    - consumes web/package-lock.json independently from the root package-lock
+    - rebuilds node-pty in the Nix build so the packaged standalone host has native terminal support
+    - is implemented for real in phase 2 so the web host can build without reusing the root dependency lock
+    EOF
 
-    runHook postInstall
+        runHook postInstall
   '';
 
   meta = {

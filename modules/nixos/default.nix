@@ -85,14 +85,15 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages =
-      [ cfg.package ]
-      ++ lib.optionals cfg.mcpServer.enable [ cfg.mcpServer.package ]
-      ++ lib.optionals cfg.daemon.enable [ cfg.daemon.package ]
-      ++ lib.optionals cfg.rpcClient.enable [ cfg.rpcClient.package ]
-      ++ lib.optionals cfg.playwright.enable [ cfg.playwright.package ]
-      ++ lib.optionals cfg.rtk.enable [ cfg.rtk.package ]
-      ++ cfg.extraPackages;
+    environment.systemPackages = [
+      cfg.package
+    ]
+    ++ lib.optionals cfg.mcpServer.enable [ cfg.mcpServer.package ]
+    ++ lib.optionals cfg.daemon.enable [ cfg.daemon.package ]
+    ++ lib.optionals cfg.rpcClient.enable [ cfg.rpcClient.package ]
+    ++ lib.optionals cfg.playwright.enable [ cfg.playwright.package ]
+    ++ lib.optionals cfg.rtk.enable [ cfg.rtk.package ]
+    ++ cfg.extraPackages;
 
     environment.sessionVariables = runtimeEnv;
   };

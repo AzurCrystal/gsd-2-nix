@@ -1,15 +1,20 @@
-{ pkgs, sourceInfo, builtTree, nativeEngine, web }:
+{
+  pkgs,
+  sourceInfo,
+  builtTree,
+  nativeEngine,
+  web,
+}:
 let
-  runtimePath =
-    pkgs.lib.makeBinPath (
-      [
-        pkgs.fd
-        pkgs.gitMinimal
-        pkgs.nodejs_24
-        pkgs.ripgrep
-      ]
-      ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.xdg-utils ]
-    );
+  runtimePath = pkgs.lib.makeBinPath (
+    [
+      pkgs.fd
+      pkgs.gitMinimal
+      pkgs.nodejs_24
+      pkgs.ripgrep
+    ]
+    ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.xdg-utils ]
+  );
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "gsd-2-core";
@@ -27,54 +32,54 @@ pkgs.stdenvNoCC.mkDerivation {
       node = pkgs.lib.getExe pkgs.nodejs_24;
     in
     ''
-      runHook preInstall
+            runHook preInstall
 
-      packageRoot="$out/lib/node_modules/gsd-pi"
-      mkdir -p "$packageRoot" "$packageRoot/scripts" "$packageRoot/src" "$out/bin" "$out/share/gsd-2-blueprint/components"
+            packageRoot="$out/lib/node_modules/gsd-pi"
+            mkdir -p "$packageRoot" "$packageRoot/scripts" "$packageRoot/src" "$out/bin" "$out/share/gsd-2-blueprint/components"
 
-      cp ${builtTree}/package.json ${builtTree}/README.md ${builtTree}/LICENSE "$packageRoot/"
-      cp -a ${builtTree}/dist ${builtTree}/packages ${builtTree}/pkg ${builtTree}/node_modules ${builtTree}/studio ${builtTree}/extensions "$packageRoot/"
-      cp -a ${builtTree}/src/resources "$packageRoot/src/"
-      cp ${builtTree}/scripts/postinstall.js ${builtTree}/scripts/link-workspace-packages.cjs ${builtTree}/scripts/ensure-workspace-builds.cjs "$packageRoot/scripts/"
-      chmod -R u+w "$packageRoot/dist" || true
-      rm -rf "$packageRoot/dist/web"
-      ln -s ${web}/dist/web "$packageRoot/dist/web"
+            cp ${builtTree}/package.json ${builtTree}/README.md ${builtTree}/LICENSE "$packageRoot/"
+            cp -a ${builtTree}/dist ${builtTree}/packages ${builtTree}/pkg ${builtTree}/node_modules ${builtTree}/studio ${builtTree}/extensions "$packageRoot/"
+            cp -a ${builtTree}/src/resources "$packageRoot/src/"
+            cp ${builtTree}/scripts/postinstall.js ${builtTree}/scripts/link-workspace-packages.cjs ${builtTree}/scripts/ensure-workspace-builds.cjs "$packageRoot/scripts/"
+            chmod -R u+w "$packageRoot/dist" || true
+            rm -rf "$packageRoot/dist/web"
+            ln -s ${web}/dist/web "$packageRoot/dist/web"
 
-      chmod -R u+w "$packageRoot/node_modules/@gsd-build" || true
-      for engineDir in "$packageRoot"/node_modules/@gsd-build/engine-*; do
-        if [ -e "$engineDir" ]; then
-          chmod -R u+w "$engineDir" || true
-          rm -rf "$engineDir"
-        fi
-      done
+            chmod -R u+w "$packageRoot/node_modules/@gsd-build" || true
+            for engineDir in "$packageRoot"/node_modules/@gsd-build/engine-*; do
+              if [ -e "$engineDir" ]; then
+                chmod -R u+w "$engineDir" || true
+                rm -rf "$engineDir"
+              fi
+            done
 
-      mkdir -p "$packageRoot/native"
-      ln -s ${nativeEngine}/lib/node_modules/gsd-pi/native/addon "$packageRoot/native/addon"
+            mkdir -p "$packageRoot/native"
+            ln -s ${nativeEngine}/lib/node_modules/gsd-pi/native/addon "$packageRoot/native/addon"
 
-      cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-2-core.md"
-# gsd-2-core
+            cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-2-core.md"
+      # gsd-2-core
 
-role: primary CLI runtime
-summary: Real phase-1 core gsd-2 CLI/runtime layer with working gsd and gsd-cli entrypoints.
+      role: primary CLI runtime
+      summary: Real phase-1 core gsd-2 CLI/runtime layer with working gsd and gsd-cli entrypoints.
 
-details:
-- wraps the built root/workspace tree from gsd-2-built-tree
-- includes the published runtime layout expected by the upstream loader
-- links the packaged standalone web host into dist/web so gsd --web can use default bootstrap resolution
-- exposes the source-built native addon at the relative path that @gsd/native resolves at runtime
-EOF
+      details:
+      - wraps the built root/workspace tree from gsd-2-built-tree
+      - includes the published runtime layout expected by the upstream loader
+      - links the packaged standalone web host into dist/web so gsd --web can use default bootstrap resolution
+      - exposes the source-built native addon at the relative path that @gsd/native resolves at runtime
+      EOF
 
-      makeWrapper ${node} "$out/bin/gsd" \
-        --add-flags "$packageRoot/dist/loader.js" \
-        --prefix PATH : "${runtimePath}" \
-        --set-default GSD_SKIP_RTK_INSTALL "1"
+            makeWrapper ${node} "$out/bin/gsd" \
+              --add-flags "$packageRoot/dist/loader.js" \
+              --prefix PATH : "${runtimePath}" \
+              --set-default GSD_SKIP_RTK_INSTALL "1"
 
-      makeWrapper ${node} "$out/bin/gsd-cli" \
-        --add-flags "$packageRoot/dist/loader.js" \
-        --prefix PATH : "${runtimePath}" \
-        --set-default GSD_SKIP_RTK_INSTALL "1"
+            makeWrapper ${node} "$out/bin/gsd-cli" \
+              --add-flags "$packageRoot/dist/loader.js" \
+              --prefix PATH : "${runtimePath}" \
+              --set-default GSD_SKIP_RTK_INSTALL "1"
 
-      runHook postInstall
+            runHook postInstall
     '';
 
   meta = with pkgs.lib; {

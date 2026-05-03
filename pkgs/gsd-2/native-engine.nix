@@ -1,4 +1,8 @@
-{ pkgs, rustToolchain, sourceInfo }:
+{
+  pkgs,
+  rustToolchain,
+  sourceInfo,
+}:
 let
   rustPlatform = pkgs.makeRustPlatform {
     cargo = rustToolchain;
@@ -55,33 +59,33 @@ rustPlatform.buildRustPackage {
   doCheck = false;
 
   installPhase = ''
-    runHook preInstall
+        runHook preInstall
 
-    addonDir="$out/lib/node_modules/gsd-pi/native/addon"
-    mkdir -p "$addonDir" "$out/share/gsd-2-blueprint/components"
+        addonDir="$out/lib/node_modules/gsd-pi/native/addon"
+        mkdir -p "$addonDir" "$out/share/gsd-2-blueprint/components"
 
-    builtAddon="$(find target -type f -name "${libraryName}" -print -quit)"
-    if [ -z "$builtAddon" ]; then
-      echo "failed to locate native-engine output ${libraryName} under target/" >&2
-      find target -maxdepth 4 -type f | sort >&2 || true
-      exit 1
-    fi
+        builtAddon="$(find target -type f -name "${libraryName}" -print -quit)"
+        if [ -z "$builtAddon" ]; then
+          echo "failed to locate native-engine output ${libraryName} under target/" >&2
+          find target -maxdepth 4 -type f | sort >&2 || true
+          exit 1
+        fi
 
-    cp "$builtAddon" "$addonDir/gsd_engine.${platformTag}.node"
+        cp "$builtAddon" "$addonDir/gsd_engine.${platformTag}.node"
 
-    cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-2-native-engine.md"
-# gsd-2-native-engine
+        cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-2-native-engine.md"
+    # gsd-2-native-engine
 
-role: native runtime bridge
-summary: Source-built Rust N-API addon for the @gsd/native runtime path.
+    role: native runtime bridge
+    summary: Source-built Rust N-API addon for the @gsd/native runtime path.
 
-details:
-- builds the native engine from the upstream gsd-2 Rust workspace using a fenix-provided toolchain
-- installs the compiled addon at lib/node_modules/gsd-pi/native/addon so the packaged loader can resolve it locally
-- is intended to replace reliance on upstream prebuilt @gsd-build/engine-* packages
-EOF
+    details:
+    - builds the native engine from the upstream gsd-2 Rust workspace using a fenix-provided toolchain
+    - installs the compiled addon at lib/node_modules/gsd-pi/native/addon so the packaged loader can resolve it locally
+    - is intended to replace reliance on upstream prebuilt @gsd-build/engine-* packages
+    EOF
 
-    runHook postInstall
+        runHook postInstall
   '';
 
   meta = with pkgs.lib; {

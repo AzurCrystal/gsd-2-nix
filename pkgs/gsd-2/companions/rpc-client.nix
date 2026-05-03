@@ -1,4 +1,8 @@
-{ pkgs, companionsTree, sourceInfo }:
+{
+  pkgs,
+  companionsTree,
+  sourceInfo,
+}:
 pkgs.stdenvNoCC.mkDerivation {
   pname = "gsd-rpc-client";
   inherit (sourceInfo) version;
@@ -6,26 +10,26 @@ pkgs.stdenvNoCC.mkDerivation {
   dontUnpack = true;
 
   installPhase = ''
-    runHook preInstall
+        runHook preInstall
 
-    packageRoot="$out/lib/node_modules/@gsd-build/rpc-client"
-    mkdir -p "$packageRoot" "$out/share/gsd-2-blueprint/components"
-    cp ${companionsTree}/packages/rpc-client/package.json "$packageRoot/"
-    cp ${companionsTree}/packages/rpc-client/README.md "$packageRoot/"
-    cp -a ${companionsTree}/packages/rpc-client/dist "$packageRoot/"
+        packageRoot="$out/lib/node_modules/@gsd-build/rpc-client"
+        mkdir -p "$packageRoot" "$out/share/gsd-2-blueprint/components"
+        cp ${companionsTree}/packages/rpc-client/package.json "$packageRoot/"
+        cp ${companionsTree}/packages/rpc-client/README.md "$packageRoot/"
+        cp -a ${companionsTree}/packages/rpc-client/dist "$packageRoot/"
 
-    cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-rpc-client.md"
-# gsd-rpc-client
+        cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-rpc-client.md"
+    # gsd-rpc-client
 
-role: companion library lane
-summary: Source-built rpc-client companion package extracted from the shared companions tree.
+    role: companion library lane
+    summary: Source-built rpc-client companion package extracted from the shared companions tree.
 
-details:
-- compiled from the upstream gsd-2 source tree
-- packaged as a library-style output without a top-level CLI wrapper
-EOF
+    details:
+    - compiled from the upstream gsd-2 source tree
+    - packaged as a library-style output without a top-level CLI wrapper
+    EOF
 
-    runHook postInstall
+        runHook postInstall
   '';
 
   meta = with pkgs.lib; {

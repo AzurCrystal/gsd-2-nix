@@ -1,4 +1,8 @@
-{ pkgs, rustToolchain, sourceInfo ? import ./source.nix { inherit (pkgs) fetchFromGitHub; } }:
+{
+  pkgs,
+  rustToolchain,
+  sourceInfo ? import ./source.nix { inherit (pkgs) fetchFromGitHub; },
+}:
 let
   componentLib = import ./component-lib.nix {
     inherit (pkgs) lib stdenvNoCC symlinkJoin;
@@ -25,11 +29,23 @@ let
   };
 
   web = import ./web.nix {
-    inherit builtTree nativeEngine pkgs sourceInfo webModules;
+    inherit
+      builtTree
+      nativeEngine
+      pkgs
+      sourceInfo
+      webModules
+      ;
   };
 
   core = import ./core.nix {
-    inherit builtTree nativeEngine pkgs sourceInfo web;
+    inherit
+      builtTree
+      nativeEngine
+      pkgs
+      sourceInfo
+      web
+      ;
   };
 
   playwrightRuntime = import ./playwright-runtime.nix {
