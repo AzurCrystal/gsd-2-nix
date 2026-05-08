@@ -13,7 +13,9 @@
       }/share/gsd-2-playwright-runtime/browsers";
       rtkBin = "${config.packages."gsd-2-rtk"}/bin/rtk";
       mcpServerBin = "${config.packages."gsd-mcp-server"}/bin/gsd-mcp-server";
+      mcpServerRoot = "${config.packages."gsd-mcp-server"}/share/gsd-2-mcp-server-root";
       daemonBin = "${config.packages."gsd-daemon"}/bin/gsd-daemon";
+      daemonRoot = "${config.packages."gsd-daemon"}/share/gsd-2-daemon-root";
       node = pkgs.lib.getExe pkgs.nodejs_24;
     in
     {
@@ -37,6 +39,12 @@
             test -f ${config.packages."gsd-2-core"}/share/gsd-2-blueprint/components/gsd-2-core.md
             test -f ${config.packages."gsd-2-web"}/dist/web/standalone/server.js
             test -f ${config.packages."gsd-2"}/dist/web/standalone/server.js
+            test -f ${mcpServerRoot}/dist/resources/extensions/gsd/bootstrap/write-gate.js
+            test -f ${mcpServerRoot}/dist/resources/extensions/gsd/tools/workflow-tool-executors.js
+            test -f ${mcpServerRoot}/src/resources/extensions/gsd/bootstrap/write-gate.ts
+            test -f ${daemonRoot}/dist/resources/extensions/gsd/bootstrap/write-gate.js
+            test -f ${daemonRoot}/dist/resources/extensions/gsd/tools/workflow-tool-executors.js
+            test -f ${daemonRoot}/src/resources/extensions/gsd/bootstrap/write-gate.ts
             test -n "$(find -L ${config.packages."gsd-2-core"}/lib/node_modules/gsd-pi/native/addon -maxdepth 1 -type f -name 'gsd_engine.*.node' -print -quit)"
             test -n "$(find -L ${config.packages."gsd-2-web"}/native/addon -maxdepth 1 -type f -name 'gsd_engine.*.node' -print -quit)"
             test -n "$(find -L ${config.packages."gsd-2"}/lib/node_modules/gsd-pi/native/addon -maxdepth 1 -type f -name 'gsd_engine.*.node' -print -quit)"
@@ -213,6 +221,7 @@
             import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
             import { tmpdir } from "node:os";
             import { join } from "node:path";
+            import { pathToFileURL } from "node:url";
 
             async function waitFor(predicate, timeoutMs, label) {
               const deadline = Date.now() + timeoutMs;
@@ -223,7 +232,25 @@
               throw new Error("timed out waiting for " + label);
             }
 
+            async function assertWorkflowBridgeImportable(root, label) {
+              const workflowToolsUrl = pathToFileURL(join(root, "packages/mcp-server/dist/workflow-tools.js"));
+              const writeGateUrl = new URL("../../../dist/resources/extensions/gsd/bootstrap/write-gate.js", workflowToolsUrl);
+              const executorsUrl = new URL("../../../dist/resources/extensions/gsd/tools/workflow-tool-executors.js", workflowToolsUrl);
+              const writeGate = await import(writeGateUrl.href);
+              const executors = await import(executorsUrl.href);
+
+              assert.equal(typeof writeGate.loadWriteGateSnapshot, "function", label);
+              assert.equal(typeof writeGate.shouldBlockPendingGateInSnapshot, "function", label);
+              assert.equal(typeof writeGate.shouldBlockQueueExecutionInSnapshot, "function", label);
+              assert.equal(typeof executors.executePlanMilestone, "function", label);
+              assert.equal(typeof executors.executeSummarySave, "function", label);
+              assert.ok(Array.isArray(executors.SUPPORTED_SUMMARY_ARTIFACT_TYPES), label);
+            }
+
             async function smokeMcpServer() {
+              await assertWorkflowBridgeImportable("${mcpServerRoot}", "mcp-server workflow bridge");
+              await assertWorkflowBridgeImportable("${daemonRoot}", "daemon bundled mcp workflow bridge");
+
               const child = spawn("${mcpServerBin}", [], {
                 stdio: ["pipe", "ignore", "pipe"],
                 env: { ...process.env },

@@ -1,5 +1,6 @@
 {
   pkgs,
+  builtTree,
   companionsTree,
   sourceInfo,
 }:
@@ -28,7 +29,12 @@ pkgs.stdenvNoCC.mkDerivation {
 
             root="$out/share/gsd-2-daemon-root"
             mkdir -p "$root" "$out/bin" "$out/share/gsd-2-blueprint/components"
+            cp ${builtTree}/package.json "$root/"
             cp -a ${companionsTree}/node_modules ${companionsTree}/packages ${companionsTree}/studio ${companionsTree}/extensions "$root/"
+            mkdir -p "$root/dist"
+            cp -a ${builtTree}/dist/resources "$root/dist/"
+            mkdir -p "$root/src"
+            cp -a ${builtTree}/src/resources "$root/src/"
 
             cat <<'EOF' > "$out/share/gsd-2-blueprint/components/gsd-daemon.md"
       # gsd-daemon
@@ -39,6 +45,7 @@ pkgs.stdenvNoCC.mkDerivation {
       details:
       - compiled from upstream gsd-2 source
       - runs against the local companion root tree instead of a placeholder stub
+      - includes root GSD runtime resources for bundled workflow/MCP helpers
       EOF
 
             makeWrapper ${node} "$out/bin/gsd-daemon" \

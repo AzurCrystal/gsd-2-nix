@@ -61,11 +61,21 @@ let
   };
 
   mcpServer = import ./companions/mcp-server.nix {
-    inherit companionsTree pkgs sourceInfo;
+    inherit
+      builtTree
+      companionsTree
+      pkgs
+      sourceInfo
+      ;
   };
 
   daemon = import ./companions/daemon.nix {
-    inherit companionsTree pkgs sourceInfo;
+    inherit
+      builtTree
+      companionsTree
+      pkgs
+      sourceInfo
+      ;
   };
 
   graphData = {
