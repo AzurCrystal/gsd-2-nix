@@ -17,6 +17,10 @@
       daemonBin = "${config.packages."gsd-daemon"}/bin/gsd-daemon";
       daemonRoot = "${config.packages."gsd-daemon"}/share/gsd-2-daemon-root";
       node = pkgs.lib.getExe pkgs.nodejs_24;
+      rpcWrapperSmokeBin = pkgs.writeShellScript "gsd-rpc-wrapper-smoke" ''
+        printf '%s\n' "$@" > "$RPC_CLIENT_WRAPPER_MARKER"
+        read _
+      '';
     in
     {
       checks.gsd-2-blueprint =
@@ -215,7 +219,7 @@
                     export HOME="$(mktemp -d)"
                     export XDG_CACHE_HOME="$HOME/.cache"
 
-                    cat > "$TMPDIR/companion-smoke.mjs" <<EOF
+                    cat > "$TMPDIR/companion-smoke.mjs" <<'EOF'
             import assert from "node:assert/strict";
             import { spawn } from "node:child_process";
             import { constants, accessSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
@@ -240,8 +244,8 @@
               'assert.ok(modulePath, label + " session-manager module path must be set");',
               'const { SessionManager } = await import(pathToFileURL(modulePath).href);',
               'assert.equal(SessionManager.resolveCLIPath(), expected, label + " resolveCLIPath should use packaged CLI");',
-              'writeFileSync(process.env.GSD_CLI_ASSERTION_MARKER, label + "\\\\n", { flag: "a" });',
-            ].join("\\n") + "\\n");
+              'writeFileSync(process.env.GSD_CLI_ASSERTION_MARKER, label + "\\n", { flag: "a" });',
+            ].join("\n") + "\n");
 
             accessSync(expectedCliPath, constants.X_OK);
 
@@ -281,9 +285,52 @@
               assert.ok(Array.isArray(executors.SUPPORTED_SUMMARY_ARTIFACT_TYPES), label);
             }
 
+            async function assertRpcClientSpawnsExecutableWrapper(root, label) {
+              const { RpcClient } = await import(pathToFileURL(join(root, "packages/rpc-client/dist/rpc-client.js")).href);
+              const dir = mkdtempSync(join(tmpdir(), "gsd-rpc-client-wrapper-"));
+              const markerPath = join(dir, "argv.txt");
+              const wrapperPath = "${rpcWrapperSmokeBin}";
+
+              const client = new RpcClient({
+                cliPath: wrapperPath,
+                cwd: dir,
+                env: { RPC_CLIENT_WRAPPER_MARKER: markerPath },
+              });
+
+              try {
+                await client.start();
+                await waitFor(
+                  () => {
+                    if (!existsSync(markerPath)) return false;
+                    const markerArgs = readFileSync(markerPath, "utf8").trimEnd().split("\n");
+                    return markerArgs[0] === "--mode" && markerArgs[1] === "rpc";
+                  },
+                  5000,
+                  label + " rpc wrapper argv",
+                  () => [
+                    "\\nwrapper:",
+                    wrapperPath,
+                    "\\nmarker:",
+                    markerPath,
+                    "\\nmarker exists:",
+                    String(existsSync(markerPath)),
+                    "\\nmarker content:",
+                    existsSync(markerPath) ? readFileSync(markerPath, "utf8") : "",
+                    "\\nwrapper content:\\n",
+                    readFileSync(wrapperPath, "utf8"),
+                    "\\nrpc stderr:\\n",
+                    client.stderr ?? "",
+                  ].join(""),
+                );
+              } finally {
+                await client.stop();
+              }
+            }
+
             async function smokeMcpServer() {
               await assertWorkflowBridgeImportable("${mcpServerRoot}", "mcp-server workflow bridge");
               await assertWorkflowBridgeImportable("${daemonRoot}", "daemon bundled mcp workflow bridge");
+              await assertRpcClientSpawnsExecutableWrapper("${mcpServerRoot}", "mcp-server");
 
               const child = spawn("${mcpServerBin}", [], {
                 stdio: ["pipe", "ignore", "pipe"],
@@ -320,6 +367,8 @@
             }
 
             async function smokeDaemon() {
+              await assertRpcClientSpawnsExecutableWrapper("${daemonRoot}", "daemon");
+
               const dir = mkdtempSync(join(tmpdir(), "gsd-daemon-smoke-"));
               const logPath = join(dir, "daemon.log");
               const configPath = join(dir, "daemon.yaml");
@@ -332,7 +381,7 @@
                 "  level: info",
                 "  max_size_mb: 10",
                 "",
-              ].join("\\n"));
+              ].join("\n"));
 
               const child = spawn("${daemonBin}", ["--config", configPath], {
                 stdio: ["ignore", "ignore", "pipe"],
@@ -368,7 +417,7 @@
               assert.match(logContent, /daemon started/);
               assert.match(logContent, /daemon shutting down/);
 
-              for (const line of logContent.trim().split("\\n")) {
+              for (const line of logContent.trim().split("\n")) {
                 const entry = JSON.parse(line);
                 assert.equal(typeof entry.ts, "string");
                 assert.equal(typeof entry.level, "string");

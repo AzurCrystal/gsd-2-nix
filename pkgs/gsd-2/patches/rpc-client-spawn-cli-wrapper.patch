@@ -1,0 +1,10 @@
+diff --git a/packages/rpc-client/src/rpc-client.ts b/packages/rpc-client/src/rpc-client.ts
+--- a/packages/rpc-client/src/rpc-client.ts
++++ b/packages/rpc-client/src/rpc-client.ts
+@@ -98 +98,5 @@ export class RpcClient {
+-		this.process = spawn("node", [cliPath, ...args], {
++		const usesNodeEntrypoint = /\.(?:cjs|js|mjs)$/.test(cliPath);
++		const spawnCommand = usesNodeEntrypoint ? "node" : cliPath;
++		const spawnArgs = usesNodeEntrypoint ? [cliPath, ...args] : args;
++
++		this.process = spawn(spawnCommand, spawnArgs, {

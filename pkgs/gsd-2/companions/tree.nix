@@ -8,6 +8,9 @@ pkgs.stdenvNoCC.mkDerivation {
   inherit (sourceInfo) version;
 
   src = builtTree;
+  patches = [
+    ../patches/rpc-client-spawn-cli-wrapper.patch
+  ];
   nativeBuildInputs = [ pkgs.nodejs_24 ];
   env = sourceInfo.commonEnv;
 
