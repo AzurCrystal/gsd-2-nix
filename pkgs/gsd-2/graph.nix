@@ -38,65 +38,20 @@ let
       ;
   };
 
-  core = import ./core.nix {
-    inherit
-      builtTree
-      nativeEngine
-      pkgs
-      sourceInfo
-      web
-      ;
-  };
-
-  playwrightRuntime = import ./playwright-runtime.nix {
-    inherit pkgs rootModules sourceInfo;
-  };
-
-  rtk = import ./rtk.nix {
-    inherit pkgs rustToolchain sourceInfo;
-  };
-
-  rpcClient = import ./companions/rpc-client.nix {
-    inherit companionsTree pkgs sourceInfo;
-  };
-
-  mcpServer = import ./companions/mcp-server.nix {
-    inherit
-      builtTree
-      companionsTree
-      core
-      pkgs
-      sourceInfo
-      ;
-  };
-
-  daemon = import ./companions/daemon.nix {
-    inherit
-      builtTree
-      companionsTree
-      core
-      pkgs
-      sourceInfo
-      ;
-  };
-
   graphData = {
     version = sourceInfo.version;
     phase = {
-      current = 3;
+      current = 4;
       implemented = [
         "gsd-2-root-modules"
         "gsd-2-built-tree"
-        "gsd-2-core"
+        "gsd-2-unified-runtime"
         "gsd-2-web-modules"
-        "gsd-2-web"
+        "gsd-2-web-stage"
         "gsd-2-native-engine"
         "gsd-2-playwright-runtime"
         "gsd-2-rtk"
         "gsd-2-companions-tree"
-        "gsd-rpc-client"
-        "gsd-mcp-server"
-        "gsd-daemon"
       ];
       placeholders = [ ];
     };
@@ -113,24 +68,20 @@ let
     publicPackages = [
       "gsd-2"
       "gsd-2-suite"
-      "gsd-2-core"
-      "gsd-2-web"
       "gsd-2-playwright-runtime"
       "gsd-2-rtk"
-      "gsd-mcp-server"
-      "gsd-daemon"
-      "gsd-rpc-client"
     ];
     composition = {
       "gsd-2" = [
-        "gsd-2-core"
-        "gsd-2-web"
-        "gsd-2-native-engine"
+        "root-cli"
+        "mcp-server"
+        "daemon"
+        "rpc-client"
+        "web"
+        "native-engine"
       ];
       "gsd-2-suite" = [
         "gsd-2"
-        "gsd-mcp-server"
-        "gsd-daemon"
         "gsd-2-playwright-runtime"
         "gsd-2-rtk"
       ];
@@ -139,40 +90,43 @@ let
 
   graphJson = builtins.toJSON graphData;
 
-  meta = import ./meta.nix {
+  core = import ./core.nix {
     inherit
-      componentLib
-      core
+      builtTree
+      companionsTree
       graphJson
       nativeEngine
+      pkgs
       sourceInfo
       web
       ;
+  };
+
+  playwrightRuntime = import ./playwright-runtime.nix {
+    inherit pkgs rootModules sourceInfo;
+  };
+
+  rtk = import ./rtk.nix {
+    inherit pkgs rustToolchain sourceInfo;
   };
 
   suite = componentLib.mkMetaPackage {
     pname = "gsd-2-suite";
     version = sourceInfo.version;
     paths = [
-      meta
-      daemon
-      mcpServer
       playwrightRuntime
-      rpcClient
       rtk
+      core
     ];
-    summary = "Extended gsd-2 suite meta package that includes companion CLIs and optional runtime helper lanes.";
+    summary = "Extended gsd-2 suite meta package that includes optional runtime helper lanes.";
     details = [
-      "Built to make end-to-end host experimentation easier while the real package graph is still being implemented."
-      "Not intended to be the default public dependency surface for downstream callers."
+      "Combines the unified gsd-2 core package with Playwright browser artifacts and RTK helper tooling."
+      "Useful for hosts that want the full local runtime closure available from one profile entry."
     ];
     files = {
       "suite-layout.txt" = ''
         suite package:
         - gsd-2
-        - gsd-mcp-server
-        - gsd-daemon
-        - gsd-rpc-client
         - gsd-2-playwright-runtime
         - gsd-2-rtk
       '';
@@ -191,14 +145,9 @@ in
   };
 
   publicPackages = {
-    "gsd-2" = meta;
+    "gsd-2" = core;
     "gsd-2-suite" = suite;
-    "gsd-2-core" = core;
-    "gsd-2-web" = web;
     "gsd-2-playwright-runtime" = playwrightRuntime;
     "gsd-2-rtk" = rtk;
-    "gsd-mcp-server" = mcpServer;
-    "gsd-daemon" = daemon;
-    "gsd-rpc-client" = rpcClient;
   };
 }

@@ -36,7 +36,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
     details:
     - builds the root CLI sources and required workspace dist outputs
-    - is the real phase-1 compiled tree consumed by gsd-2-core
+    - is the real phase-1 compiled tree consumed by the unified gsd-2 package
     - leaves web standalone packaging for a later graph stage
     EOF
 

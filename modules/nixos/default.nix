@@ -31,30 +31,6 @@ in
       description = "Primary gsd meta package to install.";
     };
 
-    mcpServer.enable = lib.mkEnableOption "install the gsd MCP server companion package";
-
-    mcpServer.package = lib.mkOption {
-      type = lib.types.package;
-      default = packages."gsd-mcp-server";
-      description = "MCP server package used when programs.gsd.mcpServer.enable is enabled.";
-    };
-
-    daemon.enable = lib.mkEnableOption "install the gsd daemon companion package";
-
-    daemon.package = lib.mkOption {
-      type = lib.types.package;
-      default = packages."gsd-daemon";
-      description = "Daemon package used when programs.gsd.daemon.enable is enabled.";
-    };
-
-    rpcClient.enable = lib.mkEnableOption "install the gsd RPC client companion package";
-
-    rpcClient.package = lib.mkOption {
-      type = lib.types.package;
-      default = packages."gsd-rpc-client";
-      description = "RPC client package used when programs.gsd.rpcClient.enable is enabled.";
-    };
-
     playwright.enable = lib.mkEnableOption "install the Playwright runtime package and export the browser runtime environment for gsd";
 
     playwright.package = lib.mkOption {
@@ -88,9 +64,6 @@ in
     environment.systemPackages = [
       cfg.package
     ]
-    ++ lib.optionals cfg.mcpServer.enable [ cfg.mcpServer.package ]
-    ++ lib.optionals cfg.daemon.enable [ cfg.daemon.package ]
-    ++ lib.optionals cfg.rpcClient.enable [ cfg.rpcClient.package ]
     ++ lib.optionals cfg.playwright.enable [ cfg.playwright.package ]
     ++ lib.optionals cfg.rtk.enable [ cfg.rtk.package ]
     ++ cfg.extraPackages;

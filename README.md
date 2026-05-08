@@ -1,7 +1,7 @@
 # `gsd-2-nix`
 
 `gsd-2-nix` packages [`gsd-build/gsd-2`](https://github.com/gsd-build/gsd-2)
-as a split `flake-parts` project with one simple public entrypoint and several
+as a `flake-parts` project with one unified GSD package and a small number of
 optional runtime/helper lanes.
 
 Repository: <https://github.com/AzurCrystal/gsd-2-nix>
@@ -9,7 +9,9 @@ Repository: <https://github.com/AzurCrystal/gsd-2-nix>
 The guiding idea is:
 
 - downstream users should usually only need `packages.${system}.gsd-2`
-- the packaging internals can still stay explicit and decomposed
+- the core runtime stays together in one package root because the CLI, MCP
+  server, daemon, RPC client, web host, and native engine are one product
+  boundary
 - runtime helpers such as Playwright browsers and RTK can stay optional rather
   than bloating the default closure
 
@@ -17,11 +19,9 @@ The guiding idea is:
 
 This repository is already in a usable state for Linux packaging work:
 
-- the main `gsd` CLI is built from upstream source
-- the standalone web lane is built from upstream source
+- the main `gsd` CLI, `gsd-mcp-server`, `gsd-daemon`, RPC client package, web
+  host, and native engine are installed into one unified `gsd-2` runtime root
 - the native engine is built locally with Rust via `fenix`
-- companion CLIs (`gsd-mcp-server`, `gsd-daemon`, `gsd-rpc-client`) are built
-  from upstream source
 - Playwright and RTK no longer rely on upstream postinstall downloads when used
   through the packaged helper lanes
 - flake checks include both structure checks and runtime smoke checks
@@ -38,24 +38,16 @@ What is still intentionally open:
 Public package outputs:
 
 - `packages.${system}.gsd-2`
-  Default user-facing meta package.
+  Default user-facing package. Includes `gsd`, `gsd-cli`, `gsd-mcp-server`,
+  `gsd-daemon`, `@gsd-build/rpc-client`, the web host, and the native engine in
+  one package root.
 - `packages.${system}.gsd-2-suite`
-  Convenience meta package that bundles the default package with companion CLIs
-  and optional runtime helper lanes.
-- `packages.${system}.gsd-2-core`
-  Core CLI/runtime layer.
-- `packages.${system}.gsd-2-web`
-  Standalone web-host layer.
+  Convenience meta package that bundles the unified package with optional
+  Playwright and RTK helper lanes.
 - `packages.${system}.gsd-2-playwright-runtime`
   Helper package that wires packaged Playwright browser artifacts into `gsd`.
 - `packages.${system}.gsd-2-rtk`
   Source-built RTK plus a small `gsd` runtime wrapper.
-- `packages.${system}.gsd-mcp-server`
-  MCP server companion CLI.
-- `packages.${system}.gsd-daemon`
-  Daemon companion CLI.
-- `packages.${system}.gsd-rpc-client`
-  RPC client companion SDK/CLI lane.
 
 Public module outputs:
 
@@ -66,7 +58,8 @@ Public module outputs:
 
 ## Packaging Shape
 
-The package graph is deliberately split:
+The build graph is still explicit internally, but the public core runtime is
+not split into independently-installed pieces:
 
 1. `source`
 2. `root-modules`
@@ -75,10 +68,12 @@ The package graph is deliberately split:
 5. `web-modules`
 6. `web`
 7. `core`
-8. `meta`
+8. `gsd-2`
 
-Companion packages and helper runtimes sit beside that main path instead of
-being hidden inside one giant derivation.
+The companion workspace packages are compiled in an internal step and installed
+back into the single `gsd-2` package root. Playwright browser artifacts and RTK
+remain separate helper packages because they are optional host/runtime
+attachments.
 
 ## Quick Start
 
@@ -128,7 +123,7 @@ nix shell .#gsd-2 .#gsd-2-rtk \
 
 - package-graph and layout assertions
 - runtime smoke checks for browser-tools and RTK integration
-- companion smoke checks for `gsd-mcp-server` and `gsd-daemon`
+- MCP server and daemon smoke checks from the unified `gsd-2` package
 
 ## Cachix
 
@@ -172,8 +167,6 @@ Example NixOS usage:
 
   programs.gsd = {
     enable = true;
-    mcpServer.enable = true;
-    daemon.enable = true;
     playwright.enable = true;
     rtk.enable = true;
   };

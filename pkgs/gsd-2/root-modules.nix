@@ -56,7 +56,7 @@ pkgs.buildNpmPackage {
 
     details:
     - consumes the root package-lock.json and root npm workspace graph
-    - feeds the built-tree and companion package derivations
+    - feeds the built-tree and unified runtime derivations
     - is implemented for real in phase 1 so later graph stages can reuse a stable offline root dependency layer
     EOF
 

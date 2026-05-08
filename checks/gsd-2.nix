@@ -6,21 +6,15 @@
       stableSourceInfo = import ../pkgs/gsd-2/source.nix {
         inherit (pkgs) fetchFromGitHub;
       };
-      gsdCoreRoot = "${config.packages."gsd-2-core"}/lib/node_modules/gsd-pi";
-      gsdWebRoot = "${config.packages."gsd-2-web"}";
+      gsdPackage = config.packages."gsd-2";
+      gsdRoot = "${gsdPackage}/lib/node_modules/gsd-pi";
       playwrightBrowsersPath = "${
         config.packages."gsd-2-playwright-runtime"
       }/share/gsd-2-playwright-runtime/browsers";
       rtkBin = "${config.packages."gsd-2-rtk"}/bin/rtk";
-      mcpServerBin = "${config.packages."gsd-mcp-server"}/bin/gsd-mcp-server";
-      mcpServerRoot = "${config.packages."gsd-mcp-server"}/share/gsd-2-mcp-server-root";
-      daemonBin = "${config.packages."gsd-daemon"}/bin/gsd-daemon";
-      daemonRoot = "${config.packages."gsd-daemon"}/share/gsd-2-daemon-root";
+      mcpServerBin = "${gsdPackage}/bin/gsd-mcp-server";
+      daemonBin = "${gsdPackage}/bin/gsd-daemon";
       node = pkgs.lib.getExe pkgs.nodejs_24;
-      rpcWrapperSmokeBin = pkgs.writeShellScript "gsd-rpc-wrapper-smoke" ''
-        printf '%s\n' "$@" > "$RPC_CLIENT_WRAPPER_MARKER"
-        read _
-      '';
     in
     {
       checks.gsd-2-blueprint =
@@ -32,27 +26,29 @@
             ];
           }
           ''
-            test -x ${config.packages."gsd-2"}/bin/gsd
-            test "$(${config.packages."gsd-2"}/bin/gsd --version)" = "${stableSourceInfo.version}"
+            test -x ${gsdPackage}/bin/gsd
+            test -x ${gsdPackage}/bin/gsd-cli
+            test -x ${gsdPackage}/bin/gsd-mcp-server
+            test -x ${gsdPackage}/bin/gsd-daemon
+            test "$(${gsdPackage}/bin/gsd --version)" = "${stableSourceInfo.version}"
             test -x ${config.packages."gsd-2-suite"}/bin/gsd-mcp-server
             test -x ${config.packages."gsd-2-suite"}/bin/gsd-daemon
             test -x ${config.packages."gsd-2-playwright-runtime"}/bin/gsd-playwright-runtime
             test -x ${config.packages."gsd-2-rtk"}/bin/rtk
             test -x ${config.packages."gsd-2-rtk"}/bin/gsd-rtk-runtime
-            test -f ${config.packages."gsd-2"}/share/gsd-2-blueprint/graph.json
-            test -f ${config.packages."gsd-2-core"}/share/gsd-2-blueprint/components/gsd-2-core.md
-            test -f ${config.packages."gsd-2-web"}/dist/web/standalone/server.js
-            test -f ${config.packages."gsd-2"}/dist/web/standalone/server.js
-            test -f ${mcpServerRoot}/dist/resources/extensions/gsd/bootstrap/write-gate.js
-            test -f ${mcpServerRoot}/dist/resources/extensions/gsd/tools/workflow-tool-executors.js
-            test -f ${mcpServerRoot}/src/resources/extensions/gsd/bootstrap/write-gate.ts
-            test -f ${daemonRoot}/dist/resources/extensions/gsd/bootstrap/write-gate.js
-            test -f ${daemonRoot}/dist/resources/extensions/gsd/tools/workflow-tool-executors.js
-            test -f ${daemonRoot}/src/resources/extensions/gsd/bootstrap/write-gate.ts
-            test -n "$(find -L ${config.packages."gsd-2-core"}/lib/node_modules/gsd-pi/native/addon -maxdepth 1 -type f -name 'gsd_engine.*.node' -print -quit)"
-            test -n "$(find -L ${config.packages."gsd-2-web"}/native/addon -maxdepth 1 -type f -name 'gsd_engine.*.node' -print -quit)"
-            test -n "$(find -L ${config.packages."gsd-2"}/lib/node_modules/gsd-pi/native/addon -maxdepth 1 -type f -name 'gsd_engine.*.node' -print -quit)"
-            test -z "$(find -L ${config.packages."gsd-2"}/lib/node_modules -path '*/@gsd-build/engine-*' -print -quit)"
+            test -f ${gsdPackage}/share/gsd-2-blueprint/graph.json
+            test -f ${gsdPackage}/share/gsd-2-blueprint/components/gsd-2.md
+            test -f ${gsdPackage}/dist/web/standalone/server.js
+            test -f ${gsdRoot}/dist/loader.js
+            test -f ${gsdRoot}/dist/web/standalone/server.js
+            test -f ${gsdRoot}/packages/mcp-server/dist/cli.js
+            test -f ${gsdRoot}/packages/daemon/dist/cli.js
+            test -f ${gsdRoot}/packages/rpc-client/dist/rpc-client.js
+            test -f ${gsdRoot}/dist/resources/extensions/gsd/bootstrap/write-gate.js
+            test -f ${gsdRoot}/dist/resources/extensions/gsd/tools/workflow-tool-executors.js
+            test -f ${gsdRoot}/src/resources/extensions/gsd/bootstrap/write-gate.ts
+            test -n "$(find -L ${gsdRoot}/native/addon -maxdepth 1 -type f -name 'gsd_engine.*.node' -print -quit)"
+            test -z "$(find -L ${gsdRoot}/node_modules -path '*/@gsd-build/engine-*' -print -quit)"
             test "$(${config.packages."gsd-2-rtk"}/bin/rtk rewrite 'git status')" = "rtk git status"
             rtkEnv="$(${config.packages."gsd-2-rtk"}/bin/gsd-rtk-runtime --print-env)"
             printf '%s\n' "$rtkEnv" | grep -q '^GSD_RTK_PATH='
@@ -92,15 +88,7 @@
             const roots = [
               [
                 "core",
-                "${gsdCoreRoot}/packages/native/dist/text/index.js",
-              ],
-              [
-                "web",
-                "${gsdWebRoot}/packages/native/dist/text/index.js",
-              ],
-              [
-                "meta",
-                "${config.packages."gsd-2"}/packages/native/dist/text/index.js",
+                "${gsdRoot}/packages/native/dist/text/index.js",
               ],
             ];
 
@@ -121,13 +109,13 @@
             import { createRequire } from "node:module";
             import { pathToFileURL } from "node:url";
 
-            const requireFromGsd = createRequire(pathToFileURL("${gsdCoreRoot}/package.json"));
+            const requireFromGsd = createRequire(pathToFileURL("${gsdRoot}/package.json"));
             const { chromium } = requireFromGsd("playwright");
-            const jiti = requireFromGsd("jiti")("${gsdCoreRoot}/src/resources/extensions/browser-tools", {
+            const jiti = requireFromGsd("jiti")("${gsdRoot}/src/resources/extensions/browser-tools", {
               interopDefault: true,
               debug: false,
             });
-            const { EVALUATE_HELPERS_SOURCE } = jiti("${gsdCoreRoot}/src/resources/extensions/browser-tools/evaluate-helpers.ts");
+            const { EVALUATE_HELPERS_SOURCE } = jiti("${gsdRoot}/src/resources/extensions/browser-tools/evaluate-helpers.ts");
 
             const browser = await chromium.launch({
               headless: true,
@@ -179,8 +167,8 @@
             process.env.RTK_TELEMETRY_DISABLED = "1";
             process.env.PATH = "${config.packages."gsd-2-rtk"}/bin:" + (process.env.PATH ?? "");
 
-            const requireFromGsd = createRequire(pathToFileURL("${gsdCoreRoot}/package.json"));
-            const jiti = requireFromGsd("jiti")("${gsdCoreRoot}/src/resources/extensions/gsd", {
+            const requireFromGsd = createRequire(pathToFileURL("${gsdRoot}/package.json"));
+            const jiti = requireFromGsd("jiti")("${gsdRoot}/src/resources/extensions/gsd", {
               interopDefault: true,
               debug: false,
             });
@@ -188,7 +176,7 @@
             execSync("git init -q", { cwd: repo, stdio: "pipe" });
             writeFileSync(join(repo, "demo.txt"), "hello from gsd rtk smoke\n");
 
-            const { runVerificationGate } = jiti("${gsdCoreRoot}/src/resources/extensions/gsd/verification-gate.ts");
+            const { runVerificationGate } = jiti("${gsdRoot}/src/resources/extensions/gsd/verification-gate.ts");
 
             const result = runVerificationGate({
               cwd: repo,
@@ -212,6 +200,7 @@
         pkgs.runCommand "gsd-2-companion-smoke"
           {
             nativeBuildInputs = [
+              pkgs.gitMinimal
               pkgs.nodejs_24
             ];
           }
@@ -229,7 +218,6 @@
 
             const cliAssertionDir = mkdtempSync(join(tmpdir(), "gsd-companion-cli-"));
             const cliAssertionHook = join(cliAssertionDir, "assert-gsd-cli-path.mjs");
-            const expectedCliPath = "${config.packages."gsd-2-core"}/bin/gsd";
 
             writeFileSync(cliAssertionHook, [
               'import assert from "node:assert/strict";',
@@ -239,7 +227,8 @@
               'const expected = process.env.EXPECTED_GSD_CLI_PATH;',
               'assert.ok(expected, label + " expected CLI path must be set");',
               'assert.equal(process.env.GSD_CLI_PATH, expected, label + " wrapper must set GSD_CLI_PATH");',
-              'accessSync(expected, constants.X_OK);',
+              'accessSync(expected, constants.R_OK);',
+              'assert.ok(expected.endsWith("/dist/loader.js"), label + " should use the root-local JS loader entrypoint");',
               'const modulePath = process.env.GSD_SESSION_MANAGER_MODULE;',
               'assert.ok(modulePath, label + " session-manager module path must be set");',
               'const { SessionManager } = await import(pathToFileURL(modulePath).href);',
@@ -247,9 +236,9 @@
               'writeFileSync(process.env.GSD_CLI_ASSERTION_MARKER, label + "\\n", { flag: "a" });',
             ].join("\n") + "\n");
 
-            accessSync(expectedCliPath, constants.X_OK);
-
-            function companionEnv(label, sessionManagerModule) {
+            function companionEnv(label, root, sessionManagerModule) {
+              const expectedCliPath = join(root, "dist", "loader.js");
+              accessSync(expectedCliPath, constants.R_OK);
               return {
                 HOME: process.env.HOME,
                 XDG_CACHE_HOME: process.env.XDG_CACHE_HOME,
@@ -285,56 +274,31 @@
               assert.ok(Array.isArray(executors.SUPPORTED_SUMMARY_ARTIFACT_TYPES), label);
             }
 
-            async function assertRpcClientSpawnsExecutableWrapper(root, label) {
+            async function assertRpcClientStartsRootLocalLoader(root, label) {
               const { RpcClient } = await import(pathToFileURL(join(root, "packages/rpc-client/dist/rpc-client.js")).href);
-              const dir = mkdtempSync(join(tmpdir(), "gsd-rpc-client-wrapper-"));
-              const markerPath = join(dir, "argv.txt");
-              const wrapperPath = "${rpcWrapperSmokeBin}";
-
               const client = new RpcClient({
-                cliPath: wrapperPath,
-                cwd: dir,
-                env: { RPC_CLIENT_WRAPPER_MARKER: markerPath },
+                cliPath: join(root, "dist", "loader.js"),
+                cwd: mkdtempSync(join(tmpdir(), "gsd-rpc-loader-smoke-")),
+                args: ["--bare"],
+                env: { HOME: process.env.HOME, XDG_CACHE_HOME: process.env.XDG_CACHE_HOME },
               });
 
               try {
                 await client.start();
-                await waitFor(
-                  () => {
-                    if (!existsSync(markerPath)) return false;
-                    const markerArgs = readFileSync(markerPath, "utf8").trimEnd().split("\n");
-                    return markerArgs[0] === "--mode" && markerArgs[1] === "rpc";
-                  },
-                  5000,
-                  label + " rpc wrapper argv",
-                  () => [
-                    "\\nwrapper:",
-                    wrapperPath,
-                    "\\nmarker:",
-                    markerPath,
-                    "\\nmarker exists:",
-                    String(existsSync(markerPath)),
-                    "\\nmarker content:",
-                    existsSync(markerPath) ? readFileSync(markerPath, "utf8") : "",
-                    "\\nwrapper content:\\n",
-                    readFileSync(wrapperPath, "utf8"),
-                    "\\nrpc stderr:\\n",
-                    client.stderr ?? "",
-                  ].join(""),
-                );
+                assert.equal(client.process.spawnfile, "node", label + " should spawn node for JS loader");
+                assert.equal(client.process.spawnargs[1], join(root, "dist", "loader.js"), label + " should pass root-local loader to node");
               } finally {
                 await client.stop();
               }
             }
 
             async function smokeMcpServer() {
-              await assertWorkflowBridgeImportable("${mcpServerRoot}", "mcp-server workflow bridge");
-              await assertWorkflowBridgeImportable("${daemonRoot}", "daemon bundled mcp workflow bridge");
-              await assertRpcClientSpawnsExecutableWrapper("${mcpServerRoot}", "mcp-server");
+              await assertWorkflowBridgeImportable("${gsdRoot}", "mcp-server workflow bridge");
+              await assertRpcClientStartsRootLocalLoader("${gsdRoot}", "mcp-server");
 
               const child = spawn("${mcpServerBin}", [], {
                 stdio: ["pipe", "ignore", "pipe"],
-                env: companionEnv("mcp-server", "${mcpServerRoot}/packages/mcp-server/dist/session-manager.js"),
+                env: companionEnv("mcp-server", "${gsdRoot}", "${gsdRoot}/packages/mcp-server/dist/session-manager.js"),
               });
 
               let stderr = "";
@@ -367,7 +331,7 @@
             }
 
             async function smokeDaemon() {
-              await assertRpcClientSpawnsExecutableWrapper("${daemonRoot}", "daemon");
+              await assertRpcClientStartsRootLocalLoader("${gsdRoot}", "daemon");
 
               const dir = mkdtempSync(join(tmpdir(), "gsd-daemon-smoke-"));
               const logPath = join(dir, "daemon.log");
@@ -385,7 +349,7 @@
 
               const child = spawn("${daemonBin}", ["--config", configPath], {
                 stdio: ["ignore", "ignore", "pipe"],
-                env: companionEnv("daemon", "${daemonRoot}/packages/daemon/dist/session-manager.js"),
+                env: companionEnv("daemon", "${gsdRoot}", "${gsdRoot}/packages/daemon/dist/session-manager.js"),
               });
 
               let stderr = "";
