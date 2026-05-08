@@ -64,6 +64,7 @@ let
     inherit
       builtTree
       companionsTree
+      core
       pkgs
       sourceInfo
       ;
@@ -73,6 +74,7 @@ let
     inherit
       builtTree
       companionsTree
+      core
       pkgs
       sourceInfo
       ;

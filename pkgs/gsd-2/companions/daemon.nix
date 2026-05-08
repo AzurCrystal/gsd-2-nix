@@ -2,13 +2,16 @@
   pkgs,
   builtTree,
   companionsTree,
+  core,
   sourceInfo,
 }:
 let
   runtimePath = pkgs.lib.makeBinPath [
+    core
     pkgs.gitMinimal
     pkgs.nodejs_24
   ];
+  gsdCliPath = "${core}/bin/gsd";
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "gsd-daemon";
@@ -46,11 +49,13 @@ pkgs.stdenvNoCC.mkDerivation {
       - compiled from upstream gsd-2 source
       - runs against the local companion root tree instead of a placeholder stub
       - includes root GSD runtime resources for bundled workflow/MCP helpers
+      - resolves managed sessions through the packaged gsd CLI
       EOF
 
             makeWrapper ${node} "$out/bin/gsd-daemon" \
               --add-flags "$root/packages/daemon/dist/cli.js" \
-              --prefix PATH : "${runtimePath}"
+              --prefix PATH : "${runtimePath}" \
+              --set-default GSD_CLI_PATH "${gsdCliPath}"
 
             runHook postInstall
     '';

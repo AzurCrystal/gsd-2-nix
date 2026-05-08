@@ -218,18 +218,52 @@
                     cat > "$TMPDIR/companion-smoke.mjs" <<EOF
             import assert from "node:assert/strict";
             import { spawn } from "node:child_process";
-            import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+            import { constants, accessSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
             import { tmpdir } from "node:os";
             import { join } from "node:path";
             import { pathToFileURL } from "node:url";
 
-            async function waitFor(predicate, timeoutMs, label) {
+            const cliAssertionDir = mkdtempSync(join(tmpdir(), "gsd-companion-cli-"));
+            const cliAssertionHook = join(cliAssertionDir, "assert-gsd-cli-path.mjs");
+            const expectedCliPath = "${config.packages."gsd-2-core"}/bin/gsd";
+
+            writeFileSync(cliAssertionHook, [
+              'import assert from "node:assert/strict";',
+              'import { constants, accessSync, writeFileSync } from "node:fs";',
+              'import { pathToFileURL } from "node:url";',
+              'const label = process.env.GSD_CLI_ASSERT_LABEL ?? "companion";',
+              'const expected = process.env.EXPECTED_GSD_CLI_PATH;',
+              'assert.ok(expected, label + " expected CLI path must be set");',
+              'assert.equal(process.env.GSD_CLI_PATH, expected, label + " wrapper must set GSD_CLI_PATH");',
+              'accessSync(expected, constants.X_OK);',
+              'const modulePath = process.env.GSD_SESSION_MANAGER_MODULE;',
+              'assert.ok(modulePath, label + " session-manager module path must be set");',
+              'const { SessionManager } = await import(pathToFileURL(modulePath).href);',
+              'assert.equal(SessionManager.resolveCLIPath(), expected, label + " resolveCLIPath should use packaged CLI");',
+              'writeFileSync(process.env.GSD_CLI_ASSERTION_MARKER, label + "\\\\n", { flag: "a" });',
+            ].join("\\n") + "\\n");
+
+            accessSync(expectedCliPath, constants.X_OK);
+
+            function companionEnv(label, sessionManagerModule) {
+              return {
+                HOME: process.env.HOME,
+                XDG_CACHE_HOME: process.env.XDG_CACHE_HOME,
+                NODE_OPTIONS: "--import=" + pathToFileURL(cliAssertionHook).href,
+                EXPECTED_GSD_CLI_PATH: expectedCliPath,
+                GSD_SESSION_MANAGER_MODULE: sessionManagerModule,
+                GSD_CLI_ASSERTION_MARKER: join(cliAssertionDir, label + ".ok"),
+                GSD_CLI_ASSERT_LABEL: label,
+              };
+            }
+
+            async function waitFor(predicate, timeoutMs, label, describeFailure = () => "") {
               const deadline = Date.now() + timeoutMs;
               while (Date.now() < deadline) {
                 if (await predicate()) return;
                 await new Promise((resolve) => setTimeout(resolve, 50));
               }
-              throw new Error("timed out waiting for " + label);
+              throw new Error("timed out waiting for " + label + describeFailure());
             }
 
             async function assertWorkflowBridgeImportable(root, label) {
@@ -253,16 +287,25 @@
 
               const child = spawn("${mcpServerBin}", [], {
                 stdio: ["pipe", "ignore", "pipe"],
-                env: { ...process.env },
+                env: companionEnv("mcp-server", "${mcpServerRoot}/packages/mcp-server/dist/session-manager.js"),
               });
 
               let stderr = "";
+              let childExit = null;
               child.stderr.setEncoding("utf8");
               child.stderr.on("data", (chunk) => {
                 stderr += chunk;
               });
+              child.on("exit", (code, signal) => {
+                childExit = { code, signal };
+              });
 
-              await waitFor(() => stderr.includes("MCP server started on stdio"), 10000, "mcp startup");
+              await waitFor(
+                () => stderr.includes("MCP server started on stdio"),
+                30000,
+                "mcp startup",
+                () => "\nstderr:\n" + stderr + "\nexit: " + JSON.stringify(childExit),
+              );
               child.stdin.end();
 
               const exitCode = await new Promise((resolve, reject) => {
@@ -273,6 +316,7 @@
               assert.equal(exitCode, 0);
               assert.match(stderr, /MCP server started on stdio/);
               assert.match(stderr, /Shutting down/);
+              assert.match(readFileSync(join(cliAssertionDir, "mcp-server.ok"), "utf8"), /mcp-server/);
             }
 
             async function smokeDaemon() {
@@ -292,16 +336,25 @@
 
               const child = spawn("${daemonBin}", ["--config", configPath], {
                 stdio: ["ignore", "ignore", "pipe"],
-                env: { ...process.env },
+                env: companionEnv("daemon", "${daemonRoot}/packages/daemon/dist/session-manager.js"),
               });
 
               let stderr = "";
+              let childExit = null;
               child.stderr.setEncoding("utf8");
               child.stderr.on("data", (chunk) => {
                 stderr += chunk;
               });
+              child.on("exit", (code, signal) => {
+                childExit = { code, signal };
+              });
 
-              await waitFor(() => existsSync(logPath) && readFileSync(logPath, "utf8").includes("daemon started"), 10000, "daemon startup log");
+              await waitFor(
+                () => existsSync(logPath) && readFileSync(logPath, "utf8").includes("daemon started"),
+                30000,
+                "daemon startup log",
+                () => "\nstderr:\n" + stderr + "\nexit: " + JSON.stringify(childExit),
+              );
               child.kill("SIGTERM");
 
               const exitCode = await new Promise((resolve, reject) => {
@@ -323,6 +376,7 @@
               }
 
               assert.equal(stderr, "");
+              assert.match(readFileSync(join(cliAssertionDir, "daemon.ok"), "utf8"), /daemon/);
             }
 
             await smokeMcpServer();
