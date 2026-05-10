@@ -18,7 +18,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
     export HOME="$TMPDIR"
 
-    cp -a ${webModules}/node_modules ./web/node_modules
+    cp -a ${webModules}/web/node_modules ./web/node_modules
 
     cat > web/app/layout.tsx <<'EOF'
     import type { Metadata, Viewport } from 'next'

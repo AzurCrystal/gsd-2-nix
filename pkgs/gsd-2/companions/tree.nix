@@ -15,7 +15,7 @@ pkgs.stdenvNoCC.mkDerivation {
   env = sourceInfo.commonEnv;
 
   buildPhase = ''
-    runHook preBuild
+    runHook preBuilD
 
     export HOME="$TMPDIR"
 

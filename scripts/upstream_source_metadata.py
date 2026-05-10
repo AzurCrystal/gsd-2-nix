@@ -4,25 +4,11 @@ import json
 import os
 import re
 import subprocess
-import tempfile
 from pathlib import Path
 
 
 SEMVER_RE = re.compile(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?")
 RTK_VERSION_RE = re.compile(r'export const RTK_VERSION = "([^"]+)"')
-EMNAPI_RUNTIME_LOCK_KEY = '    "node_modules/@emnapi/runtime": {'
-EMNAPI_WASI_THREADS_LOCK_KEY = '    "node_modules/@emnapi/wasi-threads": {'
-EMNAPI_RUNTIME_LOCK_ENTRY = """    "node_modules/@emnapi/runtime": {
-      "version": "1.10.0",
-      "resolved": "https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.10.0.tgz",
-      "integrity": "sha512-ewvYlk86xUoGI0zQRNq/mC+16R1QeDlKQy21Ki3oSYXNgLb45GV1P6A0M+/s6nyCuNDqe5VpaY84BzXGwVbwFA==",
-      "license": "MIT",
-      "optional": true,
-      "dependencies": {
-        "tslib": "^2.4.0"
-      }
-    },
-"""
 
 
 def prefetch_github_source(owner: str, repo: str, ref: str) -> dict[str, str]:
@@ -66,49 +52,7 @@ def prefetch_npm_deps(lockfile_path: Path, fetcher_version: int = 1) -> str:
 
 
 def prefetch_root_npm_deps(source_root: Path) -> str:
-    lockfile_path = source_root / "package-lock.json"
-    lock_text = lockfile_path.read_text(encoding="utf-8")
-    patched_lock_text = patch_root_package_lock(lock_text)
-
-    if patched_lock_text == lock_text:
-        return prefetch_npm_deps(lockfile_path, fetcher_version=2)
-
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        patched_lockfile = Path(tmp_dir) / "package-lock.json"
-        patched_lockfile.write_text(patched_lock_text, encoding="utf-8")
-        return prefetch_npm_deps(patched_lockfile, fetcher_version=2)
-
-
-def patch_root_package_lock(lock_text: str) -> str:
-    if EMNAPI_RUNTIME_LOCK_KEY in lock_text:
-        return lock_text
-
-    lock_info = json.loads(lock_text)
-    packages = lock_info.get("packages")
-    if not isinstance(packages, dict):
-        raise RuntimeError("root package-lock.json did not include packages")
-
-    required_versions = {
-        dependencies.get("@emnapi/runtime")
-        for package in packages.values()
-        if isinstance(package, dict)
-        for dependencies in [package.get("dependencies")]
-        if isinstance(dependencies, dict)
-        and isinstance(dependencies.get("@emnapi/runtime"), str)
-    }
-    if "1.10.0" not in required_versions:
-        raise RuntimeError(
-            "root package-lock.json references @emnapi/runtime but the "
-            f"known lockfile patch does not cover {sorted(required_versions)!r}"
-        )
-    if EMNAPI_WASI_THREADS_LOCK_KEY not in lock_text:
-        raise RuntimeError("could not find insertion point for @emnapi/runtime")
-
-    return lock_text.replace(
-        EMNAPI_WASI_THREADS_LOCK_KEY,
-        EMNAPI_RUNTIME_LOCK_ENTRY + EMNAPI_WASI_THREADS_LOCK_KEY,
-        1,
-    )
+    return prefetch_npm_deps(source_root / "package-lock.json", fetcher_version=2)
 
 
 def parse_semver(raw_value: str, field_name: str) -> str:
