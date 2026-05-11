@@ -4,11 +4,44 @@ import json
 import os
 import re
 import subprocess
+import urllib.request
 from pathlib import Path
 
 
 SEMVER_RE = re.compile(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?")
-RTK_VERSION_RE = re.compile(r'export const RTK_VERSION = "([^"]+)"')
+
+
+def github_api_headers() -> dict[str, str]:
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "gsd-2-nix-release-bot",
+    }
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
+
+
+def fetch_latest_github_release(owner: str, repo: str) -> dict[str, str]:
+    request = urllib.request.Request(
+        f"https://api.github.com/repos/{owner}/{repo}/releases/latest",
+        headers=github_api_headers(),
+    )
+    with urllib.request.urlopen(request) as response:
+        payload = json.load(response)
+
+    tag_name = payload.get("tag_name")
+    if not tag_name:
+        raise RuntimeError(
+            f"{owner}/{repo} latest release payload did not include tag_name"
+        )
+
+    version = tag_name.lstrip("vV")
+    return {
+        "tag_name": tag_name,
+        "version": version,
+        "html_url": payload.get("html_url", ""),
+    }
 
 
 def prefetch_github_source(owner: str, repo: str, ref: str) -> dict[str, str]:
@@ -62,15 +95,22 @@ def parse_semver(raw_value: str, field_name: str) -> str:
     return match.group(0)
 
 
-def parse_rtk_version(source_root: Path) -> str:
-    rtk_source = (source_root / "src" / "rtk.ts").read_text(encoding="utf-8")
-    match = RTK_VERSION_RE.search(rtk_source)
-    if not match:
-        raise RuntimeError("could not find RTK_VERSION in src/rtk.ts")
-    return match.group(1)
+def collect_latest_rtk_source_metadata(
+    release: dict[str, str] | None = None,
+) -> dict[str, str]:
+    release = release or fetch_latest_github_release("rtk-ai", "rtk")
+    rtk_version = parse_semver(release["version"], "rtk latest release")
+    rtk_source = prefetch_github_source("rtk-ai", "rtk", release["tag_name"])
+    return {
+        "rtkVersion": rtk_version,
+        "rtkSrcHash": rtk_source["hash"],
+    }
 
 
-def collect_upstream_source_metadata(source_root: Path) -> dict[str, str]:
+def collect_upstream_source_metadata(
+    source_root: Path,
+    rtk_release: dict[str, str] | None = None,
+) -> dict[str, str]:
     package_json = json.loads(
         (source_root / "package.json").read_text(encoding="utf-8")
     )
@@ -82,14 +122,11 @@ def collect_upstream_source_metadata(source_root: Path) -> dict[str, str]:
     if not isinstance(playwright_spec, str):
         raise RuntimeError("package.json did not include dependencies.playwright")
 
-    rtk_version = parse_rtk_version(source_root)
-    rtk_source = prefetch_github_source("rtk-ai", "rtk", f"v{rtk_version}")
-
-    return {
+    metadata = {
         "upstreamVersion": parse_semver(package_version, "package.json version"),
         "playwrightVersion": parse_semver(playwright_spec, "dependencies.playwright"),
-        "rtkVersion": rtk_version,
-        "rtkSrcHash": rtk_source["hash"],
         "rootNpmDepsHash": prefetch_root_npm_deps(source_root),
         "webNpmDepsHash": prefetch_npm_deps(source_root / "web" / "package-lock.json"),
     }
+    metadata.update(collect_latest_rtk_source_metadata(rtk_release))
+    return metadata

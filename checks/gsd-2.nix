@@ -36,6 +36,7 @@
             test -x ${config.packages."gsd-2-playwright-runtime"}/bin/gsd-playwright-runtime
             test -x ${config.packages."gsd-2-rtk"}/bin/rtk
             test -x ${config.packages."gsd-2-rtk"}/bin/gsd-rtk-runtime
+            test "$(${config.packages."gsd-2-rtk"}/bin/rtk --version)" = "rtk ${stableSourceInfo.rtkVersion}"
             test -f ${gsdPackage}/share/gsd-2-blueprint/graph.json
             test -f ${gsdPackage}/share/gsd-2-blueprint/components/gsd-2.md
             test -f ${gsdPackage}/dist/web/standalone/server.js

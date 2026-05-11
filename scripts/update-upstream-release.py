@@ -3,44 +3,17 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import urllib.request
 from pathlib import Path
 
 from upstream_source_metadata import (
     collect_upstream_source_metadata,
+    fetch_latest_github_release,
     prefetch_github_source,
 )
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_FILE = ROOT / "pkgs" / "gsd-2" / "source.json"
-UPSTREAM_RELEASE_URL = "https://api.github.com/repos/gsd-build/gsd-2/releases/latest"
-
-
-def fetch_latest_release() -> dict[str, str]:
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "User-Agent": "gsd-2-nix-release-bot",
-    }
-    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-
-    request = urllib.request.Request(UPSTREAM_RELEASE_URL, headers=headers)
-    with urllib.request.urlopen(request) as response:
-        payload = json.load(response)
-
-    tag_name = payload.get("tag_name")
-    if not tag_name:
-        raise RuntimeError("upstream latest release payload did not include tag_name")
-
-    html_url = payload.get("html_url", "")
-    return {
-        "tag_name": tag_name,
-        "version": tag_name.lstrip("vV"),
-        "html_url": html_url,
-    }
 
 
 def emit_outputs(path: Path | None, values: dict[str, str]) -> None:
@@ -62,12 +35,14 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    release = fetch_latest_release()
+    release = fetch_latest_github_release("gsd-build", "gsd-2")
+    rtk_release = fetch_latest_github_release("rtk-ai", "rtk")
     current_info = json.loads(SOURCE_FILE.read_text(encoding="utf-8"))
 
     current_version = current_info.get("version")
     if not current_version:
         raise RuntimeError("could not find version assignment in source.json")
+    current_rtk_version = current_info.get("rtkVersion", "")
 
     target_version = release["version"]
     tag_name = release["tag_name"]
@@ -76,7 +51,7 @@ def main() -> int:
     target_info = dict(current_info)
     target_info["version"] = target_version
     target_info["srcHash"] = source["hash"]
-    target_info.update(collect_upstream_source_metadata(source_root))
+    target_info.update(collect_upstream_source_metadata(source_root, rtk_release))
 
     if current_info == target_info:
         emit_outputs(
@@ -88,11 +63,22 @@ def main() -> int:
                 "tag_name": tag_name,
                 "release_url": release["html_url"],
                 "hash": "",
+                "current_rtk_version": current_rtk_version,
+                "target_rtk_version": rtk_release["version"],
+                "rtk_tag_name": rtk_release["tag_name"],
+                "rtk_release_url": rtk_release["html_url"],
+                "rtk_hash": "",
             },
         )
         print(
             json.dumps(
-                {"updated": False, "version": current_version, "tag_name": tag_name}
+                {
+                    "updated": False,
+                    "version": current_version,
+                    "tag_name": tag_name,
+                    "rtk_version": current_rtk_version,
+                    "rtk_tag_name": rtk_release["tag_name"],
+                }
             )
         )
         return 0
@@ -111,6 +97,11 @@ def main() -> int:
             "tag_name": tag_name,
             "release_url": release["html_url"],
             "hash": source["hash"],
+            "current_rtk_version": current_rtk_version,
+            "target_rtk_version": target_info["rtkVersion"],
+            "rtk_tag_name": rtk_release["tag_name"],
+            "rtk_release_url": rtk_release["html_url"],
+            "rtk_hash": target_info["rtkSrcHash"],
         },
     )
     print(
@@ -121,6 +112,10 @@ def main() -> int:
                 "target_version": target_version,
                 "tag_name": tag_name,
                 "hash": source["hash"],
+                "current_rtk_version": current_rtk_version,
+                "target_rtk_version": target_info["rtkVersion"],
+                "rtk_tag_name": rtk_release["tag_name"],
+                "rtk_hash": target_info["rtkSrcHash"],
             }
         )
     )

@@ -1,8 +1,8 @@
 {
   "version": "2.81.0",
   "playwrightVersion": "1.58.2",
-  "rtkVersion": "0.33.1",
-  "rtkSrcHash": "sha256-QkAtxSpMyjbscQgSUWks0aIkWaAYXgY6c9qM3sdPN+0=",
+  "rtkVersion": "0.39.0",
+  "rtkSrcHash": "sha256-TX4MtR/rq61wxHWYJAO2x3CYvZtkCoXynf45dRC+MVo=",
   "rootNpmDepsHash": "sha256-N0izM8bwlw/cIKGloEkTT4roY38S42fDZXIBR2AqhJQ=",
   "webNpmDepsHash": "sha256-K6WndhLeST6jDgCetvUDeiJVkdPDzg6gz7pJjBqSi34=",
   "srcHash": "sha256-nO5plEl1rNxoJIxOqUtq+SLacIMwfk2uXVcO9CS5XWw=",

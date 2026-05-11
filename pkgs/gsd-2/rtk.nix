@@ -18,7 +18,7 @@ let
 in
 rustPlatform.buildRustPackage {
   pname = "gsd-2-rtk";
-  version = sourceInfo.version;
+  version = sourceInfo.rtkVersion;
   src = rtkSrc;
 
   cargoLock.lockFile = "${rtkSrc}/Cargo.lock";
@@ -47,7 +47,7 @@ rustPlatform.buildRustPackage {
     summary: Source-built RTK helper for gsd shell-command compression, kept outside the default gsd-2 closure.
 
     details:
-    - builds rtk from the upstream rtk-ai/rtk source tag pinned by gsd instead of downloading release binaries at postinstall time
+    - builds rtk from the latest upstream rtk-ai/rtk source release tracked by this flake instead of downloading release binaries at postinstall time
     - exports GSD_RTK_PATH to the packaged binary so gsd can use RTK without writing into ~/.gsd/agent/bin
     - exports GSD_SKIP_RTK_INSTALL=1 to keep runtime behavior offline once a packaged RTK path is provided
     - exports RTK_TELEMETRY_DISABLED=1 to match gsd's managed-invocation policy

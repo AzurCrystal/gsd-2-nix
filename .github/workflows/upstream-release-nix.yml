@@ -8,7 +8,9 @@ on:
       - "checks/gsd-2.nix"
       - "pkgs/gsd-2/source.json"
       - "pkgs/gsd-2/source.nix"
+      - "pkgs/gsd-2/rtk.nix"
       - "scripts/poll-upstream-release.py"
+      - "scripts/upstream_source_metadata.py"
       - "scripts/update-upstream-release.py"
   repository_dispatch:
     types:
@@ -82,16 +84,20 @@ jobs:
           - Current version: `${{ steps.release.outputs.current_version }}`
           - Updated version: `${{ steps.release.outputs.target_version }}`
           - Prefetched hash: `${{ steps.release.outputs.hash }}`
+          - Current RTK version: `${{ steps.release.outputs.current_rtk_version }}`
+          - Updated RTK version: `${{ steps.release.outputs.target_rtk_version }}`
+          - RTK release: [${{ steps.release.outputs.rtk_tag_name }}](${{ steps.release.outputs.rtk_release_url }})
+          - RTK source hash: `${{ steps.release.outputs.rtk_hash }}`
 
-          The workflow updates `pkgs/gsd-2/source.json` and keeps the version assertion in `checks/gsd-2.nix` tied to the package version attribute.
+          The workflow updates `pkgs/gsd-2/source.json`, keeps GSD tied to the latest upstream release, and keeps the packaged RTK helper tied to the latest `rtk-ai/rtk` release.
           EOF
 
       - name: Create pull request
         if: steps.release.outputs.updated == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
-          branch: bot/upstream-gsd-2-${{ steps.release.outputs.target_version }}
-          title: "chore(gsd-2): update upstream release to v${{ steps.release.outputs.target_version }}"
-          commit-message: "chore(gsd-2): update upstream release to v${{ steps.release.outputs.target_version }}"
+          branch: bot/upstream-gsd-2-${{ steps.release.outputs.target_version }}-rtk-${{ steps.release.outputs.target_rtk_version }}
+          title: "chore(gsd-2): update upstream sources"
+          commit-message: "chore(gsd-2): update upstream sources"
           body-path: ${{ runner.temp }}/upstream-release-pr-body.md
           delete-branch: true
